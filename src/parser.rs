@@ -1,4 +1,6 @@
 #![allow(unused)]
+
+use std::vec;
 use crate::token::Token;
 use crate::errors::{ParserError, ProgramError};
 
@@ -39,18 +41,83 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
     while *index < tokens.len() {
         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
         match token {  // Convert String to &str for comparison
-            "]" => close_brackets(level,index)?,
-            "[" => create_list(current , level, index, tokens)?,
+            "]" => {
+                if *level == 0 {
+                    return Err(ParserError::UnmatchedClosingBracket);
+                }
+                *index += 1;
+                *level -= 1;
+                return Ok(());
+            },
+            "[" => {
+                *index += 1;
+                *level += 1;
+                let mut new_current = vec![];
+                nest(&mut new_current, level, index, tokens)?;
+                current.push(Token::Block(new_current));
+            },
             _ if token.parse::<i64>().is_ok() => create_int(current, index, tokens)?,
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,
-            "+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
+            "div"|"+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
             "True"|"False" => is_bool(current, index, tokens)?,
             "not"| "&&" | "||" => is_logical(current, index, tokens)?,
+            "length" => is_list_operations(current, index, tokens)?,
             _ => Err(ParserError::UnexpectedToken)?
         }
     }
-    validate_brackets(level)
+    if *level != 0 {
+        Err(ParserError::IncompleteQuotation)
+    } else {
+        Ok(())
+    }
+}
+
+// fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+//     while *index < tokens.len() {
+//         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+//         match token {  // Convert String to &str for comparison
+//             "]" => close_brackets(level,index)?,
+//             "[" => create_list(current , level, index, tokens)?,
+//             _ if token.parse::<i64>().is_ok() => create_int(current, index, tokens)?,
+//             // _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
+//             // "\"" => create_string(current, index, tokens)?,
+//             // "div"|"+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
+//             // "True"|"False" => is_bool(current, index, tokens)?,
+//             // "not"| "&&" | "||" => is_logical(current, index, tokens)?,
+//             // "length" => is_list_operations(current, index, tokens)?,
+//             _ => Err(ParserError::UnexpectedToken)?
+//         }
+//     }
+//     validate_brackets(level)
+// }
+
+
+// fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+//     while *index < tokens.len() {
+//         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+//         match token {  // Convert String to &str for comparison
+//             "]" => close_brackets(level,index)?,
+//             "[" => create_list(current , level, index, tokens)?,
+//             _ if token.parse::<i64>().is_ok() => create_int(current, index, tokens)?,
+//             // _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
+//             // "\"" => create_string(current, index, tokens)?,
+//             // "div"|"+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
+//             // "True"|"False" => is_bool(current, index, tokens)?,
+//             // "not"| "&&" | "||" => is_logical(current, index, tokens)?,
+//             // "length" => is_list_operations(current, index, tokens)?,
+//             _ => Err(ParserError::UnexpectedToken)?
+//         }
+//     }
+//     validate_brackets(level)
+// }
+
+
+fn is_list_operations(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+    current.push(Token::ListOperations(token.to_string()));
+    *index += 1; // go to next token
+    Ok(())
 }
 
 fn is_logical(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
@@ -84,8 +151,6 @@ fn create_func(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -
     }
     Ok(())
 }
-
-
 fn validate_brackets(level: &mut usize) -> Result<(), ParserError>{
     if *level != 0 {
         Err(ParserError::IncompleteList)
@@ -93,7 +158,6 @@ fn validate_brackets(level: &mut usize) -> Result<(), ParserError>{
         Ok(())
     }
 }
-
 fn close_brackets(level: &mut usize, index: &mut usize) -> Result<(), ParserError> {
     if *level == 0 {
         return Err(ParserError::UnmatchedClosingBracket);
@@ -102,10 +166,10 @@ fn close_brackets(level: &mut usize, index: &mut usize) -> Result<(), ParserErro
     *level -= 1;
     return Ok(());
 }
-
 fn create_string(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     *index += 1; // Move past the opening quote
     let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+
     *index += 1; // Move past the string content
     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
     if next_token == "\"" {
@@ -116,10 +180,9 @@ fn create_string(current: &mut Vec<Token>, index: &mut usize, tokens: &[String])
         Err(ParserError::IncompleteString)
     }
 }
-
 fn create_int(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     if let Ok(num) = tokens[*index].parse::<i64>() {
-        current.push(Token::Int(num));
+        current.extend(vec![Token::Int(num)]);
         *index += 1;
     }
     Ok(())
@@ -141,6 +204,7 @@ fn create_list<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usiz
     current.push(Token::Block(new_current));
     Ok(())
 }
+
 
 pub fn split_into_tokens(input: &str) -> Vec<String> {
     let mut result = Vec::new();
@@ -179,3 +243,36 @@ pub fn split_into_tokens(input: &str) -> Vec<String> {
 
     result
 }
+
+
+
+// returns vec<Token>
+// fn nest(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, tokens: &[String]) -> Result<Vec<Token>, ParserError> {
+//     while *index < tokens.len() {
+//         match tokens[*index].as_str() {  // Convert String to &str for comparison
+//             "]" => {
+//                 *index += 1;        // Move past "]"
+//                 *level -= 1;        // Decrease nesting level
+//                 return Ok(current.to_vec());  // Return the current nested block
+//             },
+//             "[" => {
+//                 *index += 1;        // Move past "]"
+//                 *level += 1;        // Increase nesting level
+//                 let mut new_current = vec![];
+//                 let block = nest(&mut new_current, level, index, tokens)?;;  // Recursively parse the new nested block
+//                 current.push(Token::Block(block));
+//             },
+//             _ => {
+//                 if let Ok(num) = tokens[*index].parse::<i64>() {
+//                     current.push(Token::Int(num));
+//                     *index += 1;
+//                 }
+//             }
+//         }
+//     }
+//     if *level != 0 {
+//         Err(ParserError::IncompleteQuotation)
+//     } else {
+//         Ok(current.to_vec()) // return the final value
+//     }
+// }

@@ -10,8 +10,11 @@ pub enum Token {
     Bool(bool),
     String(String),
     Arithmetic(String),  // For operations like +, -, *, /
-    LogicalOperations(String),
     Block(Vec<Token>),   // For blocks or quotations
+
+    // Ny
+    LogicalOperations(String),
+    ListOperations(String)
 }
 
 

@@ -10,14 +10,16 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
 
     for token in tokens {
         match token {
-            Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_)  => {
+            Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::Block(_) => {
                 stack.push(token);
             },
-            Token::Arithmetic(op) | Token::LogicalOperations(op) => execute_operation(&op, &mut stack)?,
-            Token::Block(_) => { // Handle block execution, if necessary, for this token type
-            },
+            Token::Arithmetic(op) | Token::LogicalOperations(op) | Token::ListOperations(op) => execute_operation(&op, &mut stack)?,
+            // Token::Block(_) => { // Handle block execution, if necessary, for this token type
+            // },
             // Other token types and their specific handling can be added here
-            _=>{}
+            _=>{
+                Err(ProgramError::UnsupportedType)?
+            }
         }
     }
 
@@ -33,8 +35,8 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
 
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
-        "&&"| "||" | "+" | "-" | "*" | "/" => binary_op(op, stack),
-        "not" => unary_op(op, stack),
+        "+" | "-" | "*" | "/"|"div"|"&&"| "||" => binary_op(op, stack),
+        "not"|"length" => unary_op(op, stack),
         _ => Err(ProgramError::UnknownOperation),
     }
 }
@@ -54,6 +56,7 @@ fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         "-" => sub(left, right)?,
         "*" => mul(left, right)?,
         "/" => fdiv(left, right)?,
+        "div" => div(left, right)?,
         "&&" => and(left, right)?,
         "||" => or(left, right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
@@ -100,6 +103,18 @@ fn fdiv(left: Token, right: Token) -> Result<Token, ProgramError> {
         return Err(ProgramError::DivisionByZero);
     }
     match (left, right) {
+        (Token::Int(a), Token::Int(b)) => Ok(Token::Float((a / b) as f64)),
+        (Token::Float(a), Token::Float(b)) => Ok(Token::Float(a / b)),
+        (Token::Int(a), Token::Float(b)) => Ok(Token::Float(a as f64 / b)),
+        (Token::Float(a), Token::Int(b)) => Ok(Token::Float(a / b as f64)),
+        _ => Err(ProgramError::ExpectedEnumerable),
+    }
+}
+fn div(left: Token, right: Token) -> Result<Token, ProgramError> {
+    if let Token::Int(0) | Token::Float(0.0) = right { // check for division by zero
+        return Err(ProgramError::DivisionByZero);
+    }
+    match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Int(a / b)),
         (Token::Float(a), Token::Float(b)) => Ok(Token::Float(a / b)),
         (Token::Int(a), Token::Float(b)) => Ok(Token::Float(a as f64 / b)),
@@ -130,6 +145,18 @@ fn or(left: Token, right: Token) -> Result<Token, ProgramError> {
 }
 
 
+// functinos
+fn length(right: Token) -> Result<Token, ProgramError> {
+    match (right) {
+        Token::String(a) => Ok(Token::Int(a.len() as i64 - 2)),
+        Token::Block(vec) => {
+            // Directly counting the elements in the vector
+            Ok(Token::Int(vec.len() as i64))
+        },
+        // ,
+        _ => Err(ProgramError::ExpectedEnumerable),
+    }
+}
 
 
 // unary_operations:
@@ -141,6 +168,7 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
 
     let result = match op {
         "not" => not(right)?,
+        "length" => length(right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
     };
 
@@ -156,302 +184,3 @@ fn not(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedBoolOrNumber),
     }
 }
-
-
-
-
-
-
-
-
-
-// pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
-//     let mut stack = Stack::new();
-//
-//     for token in tokens {
-//         match token {
-//             Token::Int(_) | Token::Float(_) | Token::Boolean(_) | Token::String(_) => stack.push(token),
-//             Token::Arithmetic(op) => execute_operation(&op, &mut stack)?,
-//             _ => return Err(ProgramError::UnexpectedToken),
-//         }
-//     }
-//
-//     if stack.elements.len() == 1 {
-//         Ok(stack.pop()?)
-//     } else {
-//         Err(ProgramError::ProgramFinishedWithMultipleValues)
-//     }
-// }
-//
-// pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-//     // Ensure there are enough elements for binary operations
-//     if stack.elements.len() < 2 {
-//         return Err(ProgramError::NotEnoughElements);
-//     }
-//
-//     let right = stack.pop()?;
-//     let left = stack.pop()?;
-//
-//     let result = match (op, left, right) {
-//         ("+", Token::Int(a), Token::Int(b)) => Token::Int(a + b),
-//         ("-", Token::Int(a), Token::Int(b)) => Token::Int(a - b),
-//         ("*", Token::Int(a), Token::Int(b)) => Token::Int(a * b),
-//         ("/", Token::Int(a), Token::Int(b)) => {
-//             if b == 0 { return Err(ProgramError::DivisionByZero); }
-//             Token::Int(a / b)
-//         },
-//         // Add cases for float and mixed operations
-//         _ => return Err(ProgramError::UnsupportedType),
-//     };
-//
-//     stack.push(result);
-//     Ok(())
-// }
-
-
-
-// pub fn interpret(tokens: Vec<Token>) -> Result<(), ProgramError> {
-//     let mut stack = Stack::new();
-//     if tokens.len() < 3 {
-//         return Err(ProgramError::NotEnoughElementss)
-//     }
-//
-//
-//     for token in tokens {
-//         match token {
-//             Token::Int(num) => stack.push(Token::Int(num)),
-//             Token::Float(num) => stack.push(Token::Float(num)),
-//
-//             Token::Arithmetic(op) => execute_operation(&op, &mut stack)?,
-//
-//             // Handle other tokens appropriately
-//             _ => (),
-//         }
-//     }
-//     Ok(())
-// }
-
-
-// pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-//     let right = stack.pop()?;
-//     let left = stack.pop()?;
-//     let result = match op {
-//         "+" => left.add(right),
-//         "-" => left.sub(right),
-//         "*" => left.mul(right),
-//         "/" => left.div(right),
-//         _ => Err(ProgramError::UnknownOperation),
-//     };
-//     stack.push(result?); // push token into the stack
-//     println!("stack: {:?}", stack.elements); // print the stack
-//     Ok(())
-// }
-
-
-
-
-
-
-
-
-
-
-
-// pub fn execute_operation(op: &str, stack: &mut Stack) {
-//     match op {
-//         "+" => {
-//             if let (Some(right), Some(left)) = (stack.pop(), stack.pop()) {
-//
-//                 match left + right {
-//                     Ok(result) => stack.push(result),
-//                     Err(e) => println!("Error: {}", e),
-//                 }
-//             } else {
-//                 println!("Error: Stack underflow");
-//             }
-//         },
-//         "-" => {
-//             if let (Some(right), Some(left)) = (stack.pop(), stack.pop()) {
-//                 match left - right {
-//                     Ok(result) => stack.push(result),
-//                     Err(e) => println!("Error: {}", e),
-//                 }
-//             } else {
-//                 println!("Error: Stack underflow");
-//             }
-//         },
-//         // Add other operations and handle different token types similarly
-//         _ => println!("Unknown operation"),
-//     }
-// }
-
-
-// pub fn execute_operation(op: &str, stack: &mut Stack) {
-//     match op {
-//         "+" => {
-//             (Token::Float(a), Token::Float(b)) => Ok(Token::Float(a + b)),
-//             if let (Some(right), Some(left)) = (stack.pop(), stack.pop()) {
-//                 if let (Token::Int(a), Token::Int(b)) = (left, right) {
-//                     stack.push(Token::Int(a + b));
-//                 }
-//             } else {
-//                 println!("Error: Stack underflow");
-//             }
-//         },
-//         // Add other operations and handle different token types similarly
-//         _ => println!("Unknown operation"),
-//     }
-// }
-
-
-// pub fn execute_operation(op: &str, stack: &mut Stack) {
-//     match op {
-//         "+" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             let result = left + right;
-//             stack.push(result.unwrap());
-//         },
-//         "-" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             let result = left - right;
-//             stack.push(result.unwrap());
-//         },
-//         _ => println!("Unknown operation"),
-//     }
-// }
-
-
-// pub trait Operations{
-//     fn execute_operation(op: &str, stack: &mut Stack);
-// }
-//
-// impl Operations for Token {
-//     pub fn execute_operation(op: &str, stack: &mut Stack) {
-//         match op {
-//             "+" => {
-//                 if let (Some(right), Some(left)) = (stack.pop(), stack.pop()) {
-//
-//                     match left + right {
-//                         Ok(result) => stack.push(result),
-//                         Err(e) => println!("Error: {}", e),
-//                     }
-//                 } else {
-//                     println!("Error: Stack underflow");
-//                 }
-//             },
-//             // Add other operations and handle different token types similarly
-//             _ => println!("Unknown operation"),
-//         }
-//     }
-// }
-
-
-
-
-
-
-// pub fn execute_operation(op: &str, stack: &mut Stack) {
-//     match op {
-//         "+" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             // Assume both are integers for simplicity; handle other cases and errors properly
-//             if let (Token::Integer(a), Token::Integer(b)) = (left, right) {
-//                 stack.push(Token::Integer(a + b));
-//             }
-//         },
-//         // Implement other operations
-//         _ => (),
-//     }
-// }
-
-
-
-
-
-
-// før
-// pub fn interpret(tokens: Vec<Token>) -> Vec<Value> {
-//     let mut stack: Vec<Value> = Vec::new();
-//     for token in tokens {
-//         match token {
-//             Token::Integer(num) => stack.push(Value::Integer(num)),
-//             Token::Float(num) => stack.push(Value::Float(num)),
-//             Token::Arithmetic(op) => execute_operation(&op, &mut stack),
-//             // Handle other tokens appropriately
-//             _ => (),
-//         }
-//     }
-//     stack
-// }
-//
-// pub fn execute_operation(op: &str, stack: &mut Vec<Value>) {
-//     match op {
-//         "+" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             // Assume both are integers for simplicity; handle other cases and errors properly
-//             if let (Value::Integer(a), Value::Integer(b)) = (left, right) {
-//                 stack.push(Value::Integer(a + b));
-//             }
-//         },
-//         // Implement other operations
-//         _ => (),
-//     }
-// }
-
-
-
-
-
-
-
-
-// pub fn interpret(commands: Vec<&str>) {
-//     for command in commands {
-//         println!("Executing command: {}", command);
-//         // Add more logic here to handle different commands
-//     }
-// }
-
-
-
-
-// pub fn interpret(commands: Vec<Token>) {
-//     for command in commands {
-//         println!("Executing command: {:?}", command);
-//         // Add more logic here to handle different commands
-//     }
-// }
-
-
-
-
-
-
-
-
-
-// //  før jeg skiftet
-// pub fn execute(stack: &mut Stack<i32>, operation: &str) {
-//     match operation {
-//         "+" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             stack.push(left + right);
-//         },
-//         "-" => {
-//             let right = stack.pop().unwrap();
-//             let left = stack.pop().unwrap();
-//             stack.push(left - right);
-//         },
-//         "dup" => {
-//             if let Some(top) = stack.top() {
-//                 stack.push(*top);
-//             }
-//         },
-//         _ => println!("Unknown operation"),
-//     }
-// }

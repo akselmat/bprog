@@ -20,10 +20,12 @@ use crate::parser::{Parser, split_into_tokens};
 
 fn main() {
     // let input = " 5 3 /  ";
-    // let input = " \"Hello \" \"world \" + ";
     // let input = " 3 4 + 4 5 + + ";
 
-    let input = " False True || ";
+    // let input = " [ 1 2 ] \" aksel \" ";
+    // let input = " [ 1 2 ] 99 ";
+
+    let input = " [ 1 ] length ";
     println!("string tokens : {:?}", input);
     println!("string tokens split : {:?}", split_into_tokens(input));
 
@@ -35,7 +37,7 @@ fn main() {
             let results = parser.get_result();
              println!("tokens: {:?}", results);
 
-             println!("tokens: {:?}", interpret(results.clone()));
+             println!("tokens interpret: {:?}", interpret(results.clone()));
             if let Err(e) = interpret(results){
                  println!("Error during parsing: {:?}", e);
             }
