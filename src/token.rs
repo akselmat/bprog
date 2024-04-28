@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::ops::Sub;
 use std::ops::Add;
 use crate::errors::ProgramError;
@@ -6,9 +7,10 @@ use crate::errors::ProgramError;
 pub enum Token {
     Int(i64),
     Float(f64),
-    Boolean(bool),
+    Bool(bool),
     String(String),
     Arithmetic(String),  // For operations like +, -, *, /
+    LogicalOperations(String),
     Block(Vec<Token>),   // For blocks or quotations
 }
 

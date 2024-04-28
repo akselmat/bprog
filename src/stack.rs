@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::errors::ProgramError;
 use crate::token::Token;
 

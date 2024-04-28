@@ -1,6 +1,6 @@
+#![allow(unused)]
 // mod cat;
 // use cat::Cat;
-
 // use bprog::Token;
 use std::io::{self, Write}; // for input/output operations
 // use std::io::{self, BufRead};
@@ -21,9 +21,12 @@ use crate::parser::{Parser, split_into_tokens};
 fn main() {
     // let input = " 5 3 /  ";
     // let input = " \"Hello \" \"world \" + ";
-    let input = " 3 4 + 4 5 + + ";
-    // let input = "  1 [ ] 2 \"Hello worsplit_into_tokensld \" ";
-    println!("string tokens : {:?}", (input));
+    // let input = " 3 4 + 4 5 + + ";
+
+    let input = " False True || ";
+    println!("string tokens : {:?}", input);
+    println!("string tokens split : {:?}", split_into_tokens(input));
+
 
     let mut parser = Parser::new(input);
     match parser.parse() {

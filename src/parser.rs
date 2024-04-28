@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::token::Token;
 use crate::errors::{ParserError, ProgramError};
 
@@ -44,10 +45,29 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,
             "+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
+            "True"|"False" => is_bool(current, index, tokens)?,
+            "not"| "&&" | "||" => is_logical(current, index, tokens)?,
             _ => Err(ParserError::UnexpectedToken)?
         }
     }
     validate_brackets(level)
+}
+
+fn is_logical(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+    current.push(Token::LogicalOperations(token.to_string()));
+    *index += 1; // go to next token
+    Ok(())
+}
+fn is_bool(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+    if token == "True" {
+        current.push(Token::Bool(true));
+    } else {
+        current.push(Token::Bool(false));
+    }
+    *index += 1; // Move past the closing quote
+    Ok(())
 }
 
 fn is_arithmetic(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
@@ -56,7 +76,6 @@ fn is_arithmetic(current: &mut Vec<Token>, index: &mut usize, tokens: &[String])
     *index += 1; // go to next token
     Ok(())
 }
-
 
 fn create_func(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     if let Ok(num) = tokens[*index].parse::<i64>() {

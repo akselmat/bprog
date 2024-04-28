@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::stack::Stack;
 use crate::token::{Token};
 
@@ -9,15 +10,14 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
 
     for token in tokens {
         match token {
-            Token::Int(_) | Token::Float(_) | Token::Boolean(_) | Token::String(_)  => {
+            Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_)  => {
                 stack.push(token);
             },
-            Token::Arithmetic(op) => execute_operation(&op, &mut stack)?,
+            Token::Arithmetic(op) | Token::LogicalOperations(op) => execute_operation(&op, &mut stack)?,
             Token::Block(_) => { // Handle block execution, if necessary, for this token type
             },
             // Other token types and their specific handling can be added here
             _=>{}
-
         }
     }
 
@@ -33,17 +33,19 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
 
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
-        "+" | "-" | "*" | "/" => execute_binary_operation(op, stack),
-        "neg" | "not" => execute_unary_operation(op, stack),
+        "&&"| "||" | "+" | "-" | "*" | "/" => binary_op(op, stack),
+        "not" => unary_op(op, stack),
         _ => Err(ProgramError::UnknownOperation),
     }
 }
 
-fn execute_binary_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+
+
+// binary_operation
+fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     if stack.elements.len() < 2 {
         return Err(ProgramError::NotEnoughElements);
     }
-
     let right = stack.pop()?;
     let left = stack.pop()?;
 
@@ -52,12 +54,16 @@ fn execute_binary_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramEr
         "-" => sub(left, right)?,
         "*" => mul(left, right)?,
         "/" => fdiv(left, right)?,
+        "&&" => and(left, right)?,
+        "||" => or(left, right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
     };
 
     stack.push(result);
     Ok(())
 }
+
+// simple arithmetic && arithmetic with type coercion
 fn add(left: Token, right: Token) -> Result<Token, ProgramError> {
     match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Int(a + b)),
@@ -71,7 +77,6 @@ fn add(left: Token, right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
-
 fn sub(left: Token, right: Token) -> Result<Token, ProgramError> {
     match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Int(a - b)),
@@ -81,7 +86,6 @@ fn sub(left: Token, right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
-
 fn mul(left: Token, right: Token) -> Result<Token, ProgramError> {
     match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Int(a * b)),
@@ -104,21 +108,53 @@ fn fdiv(left: Token, right: Token) -> Result<Token, ProgramError> {
     }
 }
 
-fn execute_unary_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+
+// bool operations
+fn and(left: Token, right: Token) -> Result<Token, ProgramError> {
+    match (left, right) {
+        (Token::Bool(true), Token::Bool(true)) => Ok(Token::Bool(true)),
+        (Token::Bool(false), Token::Bool(true)) => Ok(Token::Bool(false)),
+        (Token::Bool(true), Token::Bool(false)) => Ok(Token::Bool(false)),
+        (Token::Bool(false), Token::Bool(false)) => Ok(Token::Bool(false)),
+        _ => Err(ProgramError::ExpectedBool),
+    }
+}
+fn or(left: Token, right: Token) -> Result<Token, ProgramError> {
+    match (left, right) {
+        (Token::Bool(true), Token::Bool(true)) => Ok(Token::Bool(true)),
+        (Token::Bool(false), Token::Bool(true)) => Ok(Token::Bool(true)),
+        (Token::Bool(true), Token::Bool(false)) => Ok(Token::Bool(true)),
+        (Token::Bool(false), Token::Bool(false)) => Ok(Token::Bool(false)),
+        _ => Err(ProgramError::ExpectedBool),
+    }
+}
+
+
+
+
+// unary_operations:
+fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     if stack.elements.is_empty() {
         return Err(ProgramError::StackEmpty);
     }
-
-    let operand = stack.pop()?;
+    let right = stack.pop()?;
 
     let result = match op {
-        // "neg" => negate_token(operand)?,
-        // "not" => not_token(operand)?,
+        "not" => not(right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
     };
 
     stack.push(result);
     Ok(())
+}
+
+fn not(right: Token) -> Result<Token, ProgramError> {
+    match right {
+        Token::Int(a)  => Ok(Token::Int(-(a))),
+        Token::Float(a) => Ok(Token::Float(-(a))),
+        Token::Bool(a) => Ok(Token::Bool((!a))),
+        _ => Err(ProgramError::ExpectedBoolOrNumber),
+    }
 }
 
 
