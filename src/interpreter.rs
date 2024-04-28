@@ -149,11 +149,7 @@ fn or(left: Token, right: Token) -> Result<Token, ProgramError> {
 fn length(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) => Ok(Token::Int(a.len() as i64 - 2)),
-        Token::Block(vec) => {
-            // Directly counting the elements in the vector
-            Ok(Token::Int(vec.len() as i64))
-        },
-        // ,
+        Token::Block(a) =>Ok(Token::Int(a.len() as i64)),
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
