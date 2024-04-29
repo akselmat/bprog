@@ -1,53 +1,64 @@
 #![allow(unused)]
-// mod cat;
-// use cat::Cat;
-// use bprog::Token;
 use std::io::{self, Write}; // for input/output operations
-// use std::io::{self, BufRead};
+extern crate bprog;
+use bprog::{parser::*,interpreter::*};
 
-mod stack;
-mod token;
-mod parser;
-mod interpreter;
-mod errors;
-
-use errors::{ProgramError, ParserError};
-use stack::Stack;
-use interpreter::{interpret};
-use crate::errors::ProgramError::ExpectedEnumerable;
-use crate::parser::{Parser, split_into_tokens};
 
 
 fn main() {
     // let input = " 5 3 /  ";
     // let input = " 3 4 + 4 5 + + ";
 
-    // let input = " [ 1 2 ] \" aksel \" ";
+    // let input = " [ False [ ] True [ 1 2 ] ] ";
     // let input = " [ 1 2 ] 99 ";
 
-    let input = " [ 1 ] length ";
-    println!("string tokens : {:?}", input);
-    println!("string tokens split : {:?}", split_into_tokens(input));
 
+    // let input = " \" 23  \" parseInteger ";
+    // let input = " 23 ";
+    let input = " [ 1 2 3 ] head ";
+
+    println!("string tokens : {:?}", input);
+    let split_tok = split_into_tokens(input);
+    println!("string tokens split : {:?}", split_tok);
 
     let mut parser = Parser::new(input);
     match parser.parse() {
-        Ok(_) => {
-            // If parsing is successful, get and print the result
-            let results = parser.get_result();
-             println!("tokens: {:?}", results);
-
-             println!("tokens interpret: {:?}", interpret(results.clone()));
-            if let Err(e) = interpret(results){
-                 println!("Error during parsing: {:?}", e);
+        Ok(results) => {
+            println!("results: {:?}", results.clone());
+            println!("tokens interpret: {:?}", interpret(results.clone()));
+            let result = interpret(results.clone());
+            match result {
+                Ok(token) => println!("{:?}", token.to_string()),
+                Err(e) => println!("Error: {:?}", e),
             }
-
+            // println!("tokens: {:?}", results);
+            // if let Err(e) = interpret(results){
+            //     println!("Error during parsing: {:?}", e);
+            // }
         },
         Err(e) => {
             // If there was an error during parsing, print the error
             println!("Error during parsing: {:?}", e);
         }
     }
+
+    // match parser.parse() {
+    //     Ok(_) => {
+    //         // If parsing is successful, get and print the result
+    //         let results = parser.get_result();
+    //          println!("tokens: {:?}", results);
+    //
+    //          println!("tokens interpret: {:?}", interpret(results.clone()));
+    //         if let Err(e) = interpret(results){
+    //              println!("Error during parsing: {:?}", e);
+    //         }
+    //
+    //     },
+    //     Err(e) => {
+    //         // If there was an error during parsing, print the error
+    //         println!("Error during parsing: {:?}", e);
+    //     }
+    // }
 }
 
 // fn run(input: &str) {
