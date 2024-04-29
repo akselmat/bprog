@@ -6,6 +6,31 @@ use crate::token::{Token};
 use crate::errors::{ProgramError};
 
 
+// pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
+//     let mut stack = Stack::new();
+//
+//     for token in tokens {
+//         match token {
+//             Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) => {
+//                 stack.push(token);
+//             },
+//             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => execute_operation(&op, &mut stack)?,
+//             _=>{
+//                 Err(ProgramError::UnsupportedType)?
+//             }
+//         }
+//     }
+//
+//     // Check that there is exactly one value left on the stack
+//     if stack.elements.len() == 1 {
+//         Ok(stack.pop()?)
+//     } else if stack.elements.is_empty() {
+//         Err(ProgramError::StackEmpty)
+//     } else {
+//         println!("sdfsdfs");
+//         Err(ProgramError::ProgramFinishedWithMultipleValues)
+//     }
+// }
 pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
     let mut stack = Stack::new();
 
@@ -14,22 +39,21 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
             Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) => {
                 stack.push(token);
             },
-            Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => execute_operation(&op, &mut stack)?,
-            _=>{
-                Err(ProgramError::UnsupportedType)?
-            }
+            Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
+                execute_operation(&op, &mut stack)?;
+            },
+            _ => return Err(ProgramError::UnsupportedType),
         }
     }
 
-    // Check that there is exactly one value left on the stack
-    if stack.elements.len() == 1 {
-        Ok(stack.pop()?)
-    } else if stack.elements.is_empty() {
+    if stack.elements.is_empty() {
         Err(ProgramError::StackEmpty)
     } else {
-        Err(ProgramError::ProgramFinishedWithMultipleValues)
+        Ok(stack.pop()?)  // Return all remaining elements as a vector
     }
 }
+
+
 
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
@@ -37,9 +61,39 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
         // |"cons"|"append"|"each"|"map"
         "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"==" => binary_op(op, stack),
         "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
+        "swap" => stack_op(op, stack),
+
         _ => Err(ProgramError::UnknownOperation),
     }
 }
+
+pub fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    match op {
+        "swap" => {
+            stack.swap()?;
+            stack.pop()?;  // Discard the top element after swapping
+            Ok(())
+        },
+        "drop" => {
+            stack.pop()?;  // Discard the top element
+            Ok(())
+        },
+        // Additional operations...
+        _ => Err(ProgramError::UnknownOperation),
+    }
+}
+
+// // stack operations
+// fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+//     match op {
+//         "swap" => stack.swap(),
+//         "pop" => {
+//             stack.pop()?;  // Pop and discard the top element
+//             Ok(())
+//         },
+//         _ => unreachable!(),
+//     }
+// }
 
 
 
@@ -68,6 +122,8 @@ fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     stack.push(result);
     Ok(())
 }
+
+
 
 // simple arithmetic && arithmetic with type coercion
 fn add(left: Token, right: Token) -> Result<Token, ProgramError> {

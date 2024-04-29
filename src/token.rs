@@ -15,7 +15,6 @@ pub enum Token {
 
     // Ny
     // Symbol(String),
-
     LogicalOp(String),
     ListOp(String)
 }

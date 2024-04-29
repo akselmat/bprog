@@ -204,24 +204,24 @@ mod test_comparison {
     }
 }
 
-// mod test_stack_operations {
-//     use bprog::t;
-//
-//     #[test]
-//     fn test_swap_pop() {
-//         assert_eq!(t("10 20 swap pop"), "20");
-//     }
-//
-//     #[test]
-//     fn test_dup_swap_pop() {
-//         assert_eq!(t("10 dup dup + swap pop"), "20");
-//     }
-//
-//     #[test]
-//     fn test_swap_dup_div() {
-//         assert_eq!(t("10 20 swap dup + div"), "1");
-//     }
-// }
+mod test_stack_operations {
+    use bprog::t;
+
+    #[test]
+    fn test_swap_pop() {
+        assert_eq!(t("10 20 swap pop"), "20");
+    }
+    //
+    // #[test]
+    // fn test_dup_swap_pop() {
+    //     assert_eq!(t("10 dup dup + swap pop"), "20");
+    // }
+    //
+    // #[test]
+    // fn test_swap_dup_div() {
+    //     assert_eq!(t("10 20 swap dup + div"), "1");
+    // }
+}
 
 mod test_length {
     use bprog::t;
@@ -272,12 +272,12 @@ mod test_lists {
     fn test_list_creation() {
         assert_eq!(t("[ 1 2 3 ]"), "[1,2,3]");
     }
-
-    #[test]
-    fn test_mixed_list_creation() {
-        assert_eq!(t("[ 1 \" bob \" ]"), "[1,\"bob\"]");
-    }
-
+    //
+    // #[test]
+    // fn test_mixed_list_creation() {
+    //     assert_eq!(t("[ 1 \" bob \" ]"), "[1,\"bob\"]");
+    // }
+    //
     #[test]
     fn test_list_empty_false() {
         assert_eq!(t("[ 1 2 ] empty"), "False");

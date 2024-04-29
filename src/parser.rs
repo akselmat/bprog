@@ -67,7 +67,7 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             _ if token.parse::<i128>().is_ok() => create_int(current, index, tokens)?,
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,
-            "div"|"+"| "-" | "*" | "/" => is_arithmetic(current, index, tokens)?,
+            "div"|"+"| "-" | "*" | "/"| "swap" => is_arithmetic(current, index, tokens)?,
             "True"|"False" => is_bool(current, index, tokens)?,
             "not"|"&&"|"||"|">"|"<"|"==" => is_logical(current, index, tokens)?,
             "head"|"tail"|"empty"|"length"|"cons"|"append"|"each"|"map" => is_list_operations(current, index, tokens)?,

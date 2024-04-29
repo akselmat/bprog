@@ -15,7 +15,7 @@ fn main() {
 
     // let input = " \" 23  \" parseInteger ";
     // let input = " 23 ";
-    let input = " [ 1 2 3 ] head ";
+    let input = " 2 33 swap ";
 
     println!("string tokens : {:?}", input);
     let split_tok = split_into_tokens(input);
