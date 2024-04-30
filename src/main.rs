@@ -18,9 +18,9 @@ fn main() {
     // let input = "  { 1 2 + }    ";
     // let input = " age 10 := age ";
     // let input = " { 20 10 + } ";
-    // let input = " age 20 :=  age ";
+    // let input = " age 20 :=  [ 10  age ] ";
     // let input = " age 20 := [  [ age ]  ] ";
-    let input = " age 20 := [ 12 [ age ]  ] ";
+    let input = " age 20 := [ 10 23 [ age ] ]  ";
 
 
 

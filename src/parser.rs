@@ -3,7 +3,7 @@
 use std::vec;
 use crate::token::Token;
 use crate::errors::{ParserError, ProgramError};
-use crate::interpreter::execute_symbol;
+
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)] // må kanskje endre dette
 pub struct Parser {
@@ -57,16 +57,16 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
                 nest(&mut new_current, level, index, tokens)?;
                 current.push(Token::List(new_current));
             },
-            // "{" => {
-            //     *index += 1;
-            //     let mut new_current = vec![];
-            //     nest(&mut new_current, level, index, tokens)?;
-            //     current.push(Token::Block(new_current));
-            // },
-            // "}" => {
-            //     *index += 1;
-            //     return Ok(());
-            // },
+            "{" => {
+                *index += 1;
+                let mut new_current = vec![];
+                nest(&mut new_current, level, index, tokens)?;
+                current.push(Token::Block(new_current));
+            },
+            "}" => {
+                *index += 1;
+                return Ok(());
+            },
             // "{" => {
             //     *index += 1;
             //     *level += 1;

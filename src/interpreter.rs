@@ -6,8 +6,6 @@ use crate::token::{Token};
 use crate::errors::{ProgramError};
 use crate::token::Token::Arithmetic;
 use std::collections::HashMap;
-use std::f32::consts::E;
-
 
 pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
     let mut stack = Stack::new();
@@ -15,29 +13,18 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
 
     for token in tokens {
         match token.clone() {
-            Token::Int(_) | Token::Float(_) | Token::Bool(_) |
-            Token::String(_) | Token::Block(_) => {
-            // Token::String(_) | Token::List(_) | Token::Block(_) => {
-                stack.push(token);
-            },
-            // Token::List(ref items) => {
-            //     let evaluated_list = construct_list(items, &symbols)?;
-            //     stack.push(evaluated_list);
-            // },
-            Token::List(list_tokens) => {
-                for l_token in list_tokens {
-                    if let Token::Symbol(tok) = l_token {
-                        execute_symbol(&tok, &mut symbols, &mut stack)?;
-                    } else {
-                        stack.push(token.clone());
-                    }
-                }
-                // let evaluated_list = construct_list(items, &symbols)?;
-                // stack.push(evaluated_list);
-            },
             Token::Symbol(symbol) => {
                 handle_symbol(token, &symbol, &mut symbols, &mut stack)?;
             },
+            Token::Int(_) | Token::Float(_) | Token::Bool(_) |
+            Token::String(_) | Token::Block(_) => {
+                stack.push(token);
+            },
+            Token::List(items) => {
+                let evaluated_list = construct_list(&items, &symbols)?;
+                stack.push(evaluated_list);
+            },
+
             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
                 execute_operation(&op, &mut stack)?;
             },
@@ -51,7 +38,6 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
         Ok(stack.elements)  // Return all remaining elements as a vector
     }
 }
-
 
 fn construct_list(tokens: &[Token], symbols: &HashMap<String, Token>) -> Result<Token, ProgramError> {
     let mut list_items = Vec::new();
@@ -71,7 +57,6 @@ fn construct_list(tokens: &[Token], symbols: &HashMap<String, Token>) -> Result<
     }
     Ok(Token::List(list_items))
 }
-
 
 fn handle_symbol(token: Token, symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     if symbol == ":=" {
@@ -100,27 +85,18 @@ fn handle_assignment(symbols: &mut HashMap<String, Token>, stack: &mut Stack) ->
     }
     let right = stack.pop()?;
     let left = stack.pop()?;
-    // println!(" left: {:?}", left.clone());
-    // println!(" rigth: {:?}", right.clone());
 
-    match (left, right.clone()) {
-        (Token::Symbol(a), Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) | Token::Block(_) ) => {
-            symbols.insert(a, right.clone());
-            // println!(" symbols.insert(a, right.clone()); ");
+    match (left, &right) {
+        (Token::Symbol(a), Token::Symbol(_)) => {
+            return Err(ProgramError::UnsupportedType);  // Prevent symbol to symbol assignment
         },
-        _ => return Err(ProgramError::ExpectedEnumerable),
+        (Token::Symbol(a), _) => {
+            symbols.insert(a, right);  // Assign any non-symbol token to the symbol
+        },
+        _ => return Err(ProgramError::ExpectedVariable("Expected a symbol for variable assignment.".to_string())),
     }
-
     Ok(())
 }
-
-    // if left == Token::Symbol("".to_string()) && right != Token::Symbol("".to_string()) {
-    //     symbols.insert(left.to_string(), right);
-    //     println!(" symbols.insert(left.to_string(), right); ");
-    //     Ok(())
-    // } else {
-    //     return Err(ProgramError::UnsupportedType);
-    // }
 
 
 
@@ -341,9 +317,9 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
 fn exec(right: Token) -> Result<Token, ProgramError> {
     match right {
 
-        Token::Int(a)  => Ok(Token::Int(-(a))),
-        Token::Float(a) => Ok(Token::Float(-(a))),
-        Token::Bool(a) => Ok(Token::Bool((!a))),
+        // Token::Int(a)  => Ok(Token::Int(-(a))),
+        // Token::Float(a) => Ok(Token::Float(-(a))),
+        // Token::Bool(a) => Ok(Token::Bool((!a))),
         _ => Err(ProgramError::ExpectedBoolOrNumber),
 
     }
@@ -404,47 +380,4 @@ fn append(left: Token, right: Token) -> Result<Token, ProgramError> {
 
 
 
-
-
-
-
-
-
-// // stack operations
-// fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-//     match op {
-//         "swap" => stack.swap(),
-//         "pop" => {
-//             stack.pop()?;  // Pop and discard the top element
-//             Ok(())
-//         },
-//         _ => unreachable!(),
-//     }
-// }
-
-// pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
-//     let mut stack = Stack::new();
-//
-//     for token in tokens {
-//         match token {
-//             Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) => {
-//                 stack.push(token);
-//             },
-//             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => execute_operation(&op, &mut stack)?,
-//             _=>{
-//                 Err(ProgramError::UnsupportedType)?
-//             }
-//         }
-//     }
-//
-//     // Check that there is exactly one value left on the stack
-//     if stack.elements.len() == 1 {
-//         Ok(stack.pop()?)
-//     } else if stack.elements.is_empty() {
-//         Err(ProgramError::StackEmpty)
-//     } else {
-//         println!("sdfsdfs");
-//         Err(ProgramError::ProgramFinishedWithMultipleValues)
-//     }
-// }
 
