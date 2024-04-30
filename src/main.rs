@@ -2,9 +2,6 @@
 use std::io::{self, Write}; // for input/output operations
 extern crate bprog;
 use bprog::{parser::*,interpreter::*};
-use bprog::stack::Stack;
-
-
 fn main() {
     // let input = " 5 3 /  ";
     // let input = " 3 4 + 4 5 + + ";
@@ -22,7 +19,9 @@ fn main() {
     // let input = " age 10 := age ";
     // let input = " { 20 10 + } ";
     // let input = " age 20 :=  age ";
-    let input = " age 20 := [  [ age ]  ] ";
+    // let input = " age 20 := [  [ age ]  ] ";
+    let input = " age 20 := [ 12 [ age ]  ] ";
+
 
 
 
@@ -34,12 +33,12 @@ fn main() {
     match parser.parse() {
         Ok(results) => {
             println!("parser: {:?}", results.clone());
-            println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
+            // println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
             match interpret(results.clone()) {
                 Ok(tokens) => println!("tokens interpret {:?}", tokens.iter()
-                        .map(|token| token.to_string())
-                        .collect::<Vec<_>>()
-                        .join(" ")),
+                    .map(|token| token.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")),
                 Err(e) => println!("Error: {:?}", e),
             }
         },
@@ -73,6 +72,9 @@ fn main() {
     //     }
     // }
 }
+
+
+use bprog::stack::Stack;
 
 // fn run(input: &str) {
 //     let mut parser = Parser::new(input);

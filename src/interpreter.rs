@@ -20,9 +20,20 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
             // Token::String(_) | Token::List(_) | Token::Block(_) => {
                 stack.push(token);
             },
-            Token::List(ref items) => {
-                let evaluated_list = construct_list(items, &symbols)?;
-                stack.push(evaluated_list);
+            // Token::List(ref items) => {
+            //     let evaluated_list = construct_list(items, &symbols)?;
+            //     stack.push(evaluated_list);
+            // },
+            Token::List(list_tokens) => {
+                for l_token in list_tokens {
+                    if let Token::Symbol(tok) = l_token {
+                        execute_symbol(&tok, &mut symbols, &mut stack)?;
+                    } else {
+                        stack.push(token.clone());
+                    }
+                }
+                // let evaluated_list = construct_list(items, &symbols)?;
+                // stack.push(evaluated_list);
             },
             Token::Symbol(symbol) => {
                 handle_symbol(token, &symbol, &mut symbols, &mut stack)?;
@@ -62,11 +73,11 @@ fn construct_list(tokens: &[Token], symbols: &HashMap<String, Token>) -> Result<
 }
 
 
-fn handle_symbol(token: Token,symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+fn handle_symbol(token: Token, symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     if symbol == ":=" {
         handle_assignment(symbols, stack)?;
     } else {
-        if let Err(_) = execute_symbol(symbols, stack, symbol){
+        if let Err(_) = execute_symbol(symbol, symbols, stack){
             stack.push(token);
         }
     }
@@ -74,7 +85,7 @@ fn handle_symbol(token: Token,symbol: &str, symbols: &mut HashMap<String, Token>
 }
 
 // Handling the execution of a symbol
-fn execute_symbol(symbols: &mut HashMap<String, Token>, stack: &mut Stack, symbol: &str) -> Result<(), ProgramError> {
+pub fn execute_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     if let Some(value) = symbols.get(symbol) {
         stack.push(value.clone());
     } else {

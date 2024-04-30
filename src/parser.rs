@@ -3,6 +3,7 @@
 use std::vec;
 use crate::token::Token;
 use crate::errors::{ParserError, ProgramError};
+use crate::interpreter::execute_symbol;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)] // må kanskje endre dette
 pub struct Parser {
