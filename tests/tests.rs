@@ -56,11 +56,11 @@ mod test_literals {
         assert_eq!(t("\" [ so { not if ] and } \""), "\"[ so { not if ] and }\"")
     }
 
-    // #[test]
-    // fn test_literal_block() {
-    //     assert_eq!(t("{ 20 10 + }"), "{ 20 10 + }")
-    // }
-    //
+    #[test]
+    fn test_literal_block() {
+        assert_eq!(t("{ 20 10 + }"), "{ 20 10 + }")
+    }
+
     // #[test]
     // fn test_literal_list_of_blocks() {
     //     assert_eq!(t("[ { + } { 10 + } { 20 10 + } ]"), "[{ + },{ 10 + },{ 20 10 + }]")
@@ -329,8 +329,8 @@ mod test_lists {
     }
 }
 
-// mod test_list_quotations {
-//     use bprog::t;
+mod test_list_quotations {
+    use bprog::t;
 //
 //     #[test]
 //     fn test_map_multiply() {
@@ -381,40 +381,40 @@ mod test_lists {
 //     fn test_foldl_div_short() {
 //         assert_eq!(t("[ 2 5 ] 20 foldl div"), "2");
 //     }
-// }
+}
 
 mod test_assignments {
     use bprog::t;
-    // #[test]
-    // fn test_variable_name() {
-    //     assert_eq!(t("age"), "age");
-    // }
+    #[test]
+    fn test_variable_name() {
+        assert_eq!(t("age"), "age");
+    }
 
-//     #[test]
-//     fn test_variable_assignment() {
-//         assert_eq!(t("age 10 := age"), "10");
-//     }
-//
-//     #[test]
-//     fn test_variable_assignment_swap() {
-//         assert_eq!(t("10 age swap := age"), "10");
-//     }
-//
-//     #[test]
-//     fn test_variable_assignment_list() {
-//         assert_eq!(t("[ 1 2 3 ] list swap := list"), "[1,2,3]");
-//     }
-//
-//     #[test]
-//     fn test_variable_update() {
-//         assert_eq!(t("age 20 := [ 10 age ]"), "[10,20]");
-//     }
+    #[test]
+    fn test_variable_assignment() {
+        assert_eq!(t("age 10 := age"), "10");
+    }
+
+    #[test]
+    fn test_variable_assignment_swap() {
+        assert_eq!(t("10 age swap := age"), "10");
+    }
+
+    #[test]
+    fn test_variable_assignment_list() {
+        assert_eq!(t("[ 1 2 3 ] list swap := list"), "[1,2,3]");
+    }
+
+    #[test]
+    fn test_variable_update() {
+        assert_eq!(t("age 20 := [ 10 age ]"), "[10,20]");
+    }
 
 }
 
-// mod test_quotations {
-//     use bprog::t;
-//
+mod test_quotations {
+    use bprog::t;
+
 //     #[test]
 //     fn test_exec_block() {
 //         assert_eq!(t("{ 20 10 + } exec"), "30");
@@ -439,8 +439,8 @@ mod test_assignments {
 //     fn test_exec_nested_block_with_add() {
 //         assert_eq!(t("{ { 10 20 + } exec 20 + } exec"), "50");
 //     }
-// }
-//
+}
+
 // mod test_if {
 //     use bprog::t;
 //

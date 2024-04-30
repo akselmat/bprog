@@ -4,7 +4,7 @@ use crate::token::Token;
 #[derive(Debug, PartialEq)]
 pub enum ProgramError {
     StackEmpty,
-    UnknownSymbol(String), // symbols: a_symbol Note: because there are no restrictions on symbols, anything that is not a reserved keyword in the language can become a valid symbol, and therefore, a function name.
+    UnknownSymbol,
     ExpectedBool,
     ExpectedBoolOrNumber,
     ExpectedEnumerable,
@@ -41,9 +41,4 @@ pub enum ParserError {
     UnexpectedEndOfInput, // ny
     UnmatchedQuotes, // ny
     UnmatchedClosingBracket, // ny
-    UnexpectedToken, // nyyyy
-
-    StackUnderflow,
-    UnsupportedType,
-    UnknownOperation,
 }

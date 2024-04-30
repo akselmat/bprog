@@ -16,7 +16,14 @@ fn main() {
     // let input = " \" 23  \" parseInteger ";
     // let input = " 23 ";
 
-    let input = "  [ 99 ] [ 2 3 ] append ";
+    // let input = "  [ 99 ] [ 2 3 ] append ";
+    // let input = "  [ 1 2 3 ] ";
+    // let input = "  { 1 2 + }    ";
+    // let input = " age 10 := age ";
+    // let input = " { 20 10 + } ";
+    // let input = " age 20 :=  age ";
+    let input = " age 20 := [  [ age ]  ] ";
+
 
 
     println!("string tokens : {:?}", input);
@@ -27,9 +34,9 @@ fn main() {
     match parser.parse() {
         Ok(results) => {
             println!("parser: {:?}", results.clone());
-            // println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
+            println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
             match interpret(results.clone()) {
-                Ok(tokens) => println!("tokens interpret [{}]", tokens.iter()
+                Ok(tokens) => println!("tokens interpret {:?}", tokens.iter()
                         .map(|token| token.to_string())
                         .collect::<Vec<_>>()
                         .join(" ")),

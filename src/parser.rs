@@ -24,14 +24,7 @@ impl Parser  {
     pub fn get_result(&self) -> Vec<Token> {
         self.result.clone()
     }
-    // pub fn get_current_token(&self) -> Result<&str, ParserError>  {
-    //     Ok(self.tokens.get(self.index).ok_or(ParserError::UnexpectedEndOfInput)?)
-    // }
 
-    // pub fn parse(&mut self) -> Result<(), ParserError> {
-    //     nest(&mut self.result, &mut self.level, &mut self.index, &self.tokens)?;
-    //     Ok(())
-    // }
     pub fn parse(&mut self) -> Result<Vec<Token>, ParserError> {
         let result = nest(&mut self.result, &mut self.level, &mut self.index, &self.tokens);
         match result {
@@ -40,8 +33,6 @@ impl Parser  {
         }
     }
 }
-
-
 
 
 // !!!!!!!!
@@ -65,6 +56,31 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
                 nest(&mut new_current, level, index, tokens)?;
                 current.push(Token::List(new_current));
             },
+            // "{" => {
+            //     *index += 1;
+            //     let mut new_current = vec![];
+            //     nest(&mut new_current, level, index, tokens)?;
+            //     current.push(Token::Block(new_current));
+            // },
+            // "}" => {
+            //     *index += 1;
+            //     return Ok(());
+            // },
+            // "{" => {
+            //     *index += 1;
+            //     *level += 1;
+            //     let mut new_current = vec![];
+            //     nest(&mut new_current, level, index, tokens)?;
+            //     current.push(Token::Block(new_current));
+            // },
+            // "}" => {
+            //     if *level == 0 {
+            //         return Err(ParserError::UnmatchedClosingBracket);
+            //     }
+            //     *index += 1;
+            //     *level -= 1;
+            //     return Ok(());
+            // },
             _ if token.parse::<i128>().is_ok() => create_int(current, index, tokens)?,
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,
@@ -73,7 +89,7 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             "not"|"&&"|"||"|">"|"<"|"==" => is_logical(current, index, tokens)?,
             "head"|"tail"|"empty"|"length"|"cons"|"append"|"each"|"map"|"cons"|"append" => is_list_operations(current, index, tokens)?,
             // "parseInteger"|"parseFloat"|"words" => is_string_parsing(current, index, tokens)?,
-            _ => Err(ParserError::UnexpectedToken)?
+            _ => is_symbol(current, index, tokens)?,
         }
     }
     if *level != 0 {
@@ -83,74 +99,18 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
     }
 }
 
-
-// fn is_string_parsing(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+fn is_symbol(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+    current.push(Token::Symbol(token.to_string()));
+    *index += 1; // go to next token
+    Ok(())
+}
+// fn is_symbol(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
 //     let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
-//     *index += 1; // Move past the string parser function
-//     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
-//
-//
-//     if token == "parseInteger" {
-//         current.push(Token::Bool(true));
-//     } else if  {
-//         token == "parseFloat"
-//     } else {
-//         current.push(Token::Bool(false));
-//     }
-//
-//
-//
-//
-//     *index += 1; // Move past the opening quote
-//
-//     *index += 1; // Move past the string content
-//     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
-//     if next_token == "\"" {
-//         *index += 1; // Move past the closing quote
-//         current.push(Token::String(token.to_string()));
-//         Ok(())
-//     } else {
-//         Err(ParserError::IncompleteString)
-//     }
-//
-//
-//
-//     //
-//     // *index += 1; // Move past the opening quote
-//     // let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
-//     //
-//     // *index += 1; // Move past the string content
-//     // let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
-//     // if next_token == "\"" {
-//     //     *index += 1; // Move past the closing quote
-//     //     current.push(Token::String(token.to_string()));
-//     //     Ok(())
-//     // } else {
-//     //     Err(ParserError::IncompleteString)
-//     // }
-//     //
-//
-//
-//
-//
-//
-//     // parseInteger ( s -- i ) takes a string from stack and converts it to Integer and puts it onto the stack
-//
-//
-//     // current.push(Token::ListOperations(token.to_string()));
-//     // *index += 1; // go to next token
+//     current.extend(vec![Token::Symbol(token.to_string())]);
+//     *index += 1;
 //     Ok(())
 // }
-
-
-// fn create_int(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
-//     if let Ok(num) = tokens[*index].parse::<i128>() {
-//         current.extend(vec![Token::Int(num)]);
-//         *index += 1;
-//     }
-//     Ok(())
-// }
-
 
 
 fn is_list_operations(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
@@ -213,6 +173,20 @@ fn create_string(current: &mut Vec<Token>, index: &mut usize, tokens: &[String])
     *index += 1; // Move past the string content
     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
     if next_token == "\"" {
+        *index += 1; // Move past the closing quote
+        current.push(Token::String(token.to_string()));
+        Ok(())
+    } else {
+        Err(ParserError::IncompleteString)
+    }
+}
+fn create_block(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    *index += 1; // Move past the opening quote
+    let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+
+    *index += 1; // Move past the string content
+    let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
+    if next_token == "}" {
         *index += 1; // Move past the closing quote
         current.push(Token::String(token.to_string()));
         Ok(())
@@ -286,6 +260,79 @@ pub fn split_into_tokens(input: &str) -> Vec<String> {
 
     result
 }
+
+
+
+
+
+// fn is_string_parsing(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+//     let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+//     *index += 1; // Move past the string parser function
+//     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
+//
+//
+//     if token == "parseInteger" {
+//         current.push(Token::Bool(true));
+//     } else if  {
+//         token == "parseFloat"
+//     } else {
+//         current.push(Token::Bool(false));
+//     }
+//
+//
+//
+//
+//     *index += 1; // Move past the opening quote
+//
+//     *index += 1; // Move past the string content
+//     let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
+//     if next_token == "\"" {
+//         *index += 1; // Move past the closing quote
+//         current.push(Token::String(token.to_string()));
+//         Ok(())
+//     } else {
+//         Err(ParserError::IncompleteString)
+//     }
+//
+//
+//
+//     //
+//     // *index += 1; // Move past the opening quote
+//     // let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+//     //
+//     // *index += 1; // Move past the string content
+//     // let next_token = tokens.get(*index).ok_or(ParserError::IncompleteString)?.as_str();
+//     // if next_token == "\"" {
+//     //     *index += 1; // Move past the closing quote
+//     //     current.push(Token::String(token.to_string()));
+//     //     Ok(())
+//     // } else {
+//     //     Err(ParserError::IncompleteString)
+//     // }
+//     //
+//
+//
+//
+//
+//
+//     // parseInteger ( s -- i ) takes a string from stack and converts it to Integer and puts it onto the stack
+//
+//
+//     // current.push(Token::ListOperations(token.to_string()));
+//     // *index += 1; // go to next token
+//     Ok(())
+// }
+
+
+// fn create_int(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+//     if let Ok(num) = tokens[*index].parse::<i128>() {
+//         current.extend(vec![Token::Int(num)]);
+//         *index += 1;
+//     }
+//     Ok(())
+// }
+
+
 
 
 
