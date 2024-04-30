@@ -5,33 +5,7 @@ use crate::stack::Stack;
 use crate::token::{Token};
 use crate::errors::{ProgramError};
 
-
-// pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
-//     let mut stack = Stack::new();
-//
-//     for token in tokens {
-//         match token {
-//             Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) => {
-//                 stack.push(token);
-//             },
-//             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => execute_operation(&op, &mut stack)?,
-//             _=>{
-//                 Err(ProgramError::UnsupportedType)?
-//             }
-//         }
-//     }
-//
-//     // Check that there is exactly one value left on the stack
-//     if stack.elements.len() == 1 {
-//         Ok(stack.pop()?)
-//     } else if stack.elements.is_empty() {
-//         Err(ProgramError::StackEmpty)
-//     } else {
-//         println!("sdfsdfs");
-//         Err(ProgramError::ProgramFinishedWithMultipleValues)
-//     }
-// }
-pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
+pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
     let mut stack = Stack::new();
 
     for token in tokens {
@@ -49,9 +23,10 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
     if stack.elements.is_empty() {
         Err(ProgramError::StackEmpty)
     } else {
-        Ok(stack.pop()?)  // Return all remaining elements as a vector
+        Ok(stack.elements)  // Return all remaining elements as a vector
     }
 }
+
 
 
 
@@ -61,40 +36,34 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
         // |"cons"|"append"|"each"|"map"
         "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"==" => binary_op(op, stack),
         "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
-        "swap" => stack_op(op, stack),
+        "swap"|"dup"|"pop" => stack_op(op, stack),
 
         _ => Err(ProgramError::UnknownOperation),
     }
 }
 
-pub fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-    match op {
-        "swap" => {
-            stack.swap()?;
-            stack.pop()?;  // Discard the top element after swapping
-            Ok(())
-        },
-        "drop" => {
-            stack.pop()?;  // Discard the top element
-            Ok(())
-        },
-        // Additional operations...
-        _ => Err(ProgramError::UnknownOperation),
-    }
-}
-
-// // stack operations
+// stack operations
 // fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
 //     match op {
-//         "swap" => stack.swap(),
-//         "pop" => {
-//             stack.pop()?;  // Pop and discard the top element
-//             Ok(())
-//         },
-//         _ => unreachable!(),
-//     }
+//         "pop" => stack.pop()?,
+//         "dup" => stack.dup()?,
+//         // "swap" => stack.swap()?,
+//         _ => return Err(ProgramError::UnknownOperation),
+//     };
+//     Ok(())
 // }
-
+fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    match op {
+        "pop" => {
+            stack.pop()?;
+        },
+        "dup" => {
+            stack.dup()?;
+        },
+        _ => return Err(ProgramError::UnknownOperation),
+    };
+    Ok(())
+}
 
 
 // binary_operation
@@ -257,6 +226,7 @@ fn equal(left: Token, right: Token) -> Result<Token, ProgramError> {
 
 // unary_operations:
 fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("unary_op:");
     if stack.elements.is_empty() {
         return Err(ProgramError::StackEmpty);
     }
@@ -268,6 +238,8 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         "tail" => tail(right)?,
         "empty" => emptyy(right)?,
         "length" => length(right)?,
+        // "pop" => stack.pop()?,
+        // "dup" => stack.dup()?,
         _ => Err(ProgramError::UnsupportedType)?
     };
 
@@ -317,4 +289,44 @@ fn length(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
+
+
+
+// // stack operations
+// fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+//     match op {
+//         "swap" => stack.swap(),
+//         "pop" => {
+//             stack.pop()?;  // Pop and discard the top element
+//             Ok(())
+//         },
+//         _ => unreachable!(),
+//     }
+// }
+
+// pub fn interpret(tokens: Vec<Token>) -> Result<Token, ProgramError> {
+//     let mut stack = Stack::new();
+//
+//     for token in tokens {
+//         match token {
+//             Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) | Token::List(_) => {
+//                 stack.push(token);
+//             },
+//             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => execute_operation(&op, &mut stack)?,
+//             _=>{
+//                 Err(ProgramError::UnsupportedType)?
+//             }
+//         }
+//     }
+//
+//     // Check that there is exactly one value left on the stack
+//     if stack.elements.len() == 1 {
+//         Ok(stack.pop()?)
+//     } else if stack.elements.is_empty() {
+//         Err(ProgramError::StackEmpty)
+//     } else {
+//         println!("sdfsdfs");
+//         Err(ProgramError::ProgramFinishedWithMultipleValues)
+//     }
+// }
 

@@ -46,16 +46,16 @@ mod test_literals {
         assert_eq!(t("[ [ ] [ ] ]"), "[[],[]]")
     }
 
-    // #[test]
-    // fn test_literal_list_of_different_types() {
-    //     assert_eq!(t("[ False [ ] True [ 1 2 ] ]"), "[False,[],True,[1,2]]")
-    // }
-    //
-    // #[test]
-    // fn test_literal_string() {
-    //     assert_eq!(t("\" [ so { not if ] and } \""), "\"[ so { not if ] and }\"")
-    // }
-    //
+    #[test]
+    fn test_literal_list_of_different_types() {
+        assert_eq!(t("[ False [ ] True [ 1 2 ] ]"), "[False,[],True,[1,2]]")
+    }
+
+    #[test]
+    fn test_literal_string() {
+        assert_eq!(t("\" [ so { not if ] and } \""), "\"[ so { not if ] and }\"")
+    }
+
     // #[test]
     // fn test_literal_block() {
     //     assert_eq!(t("{ 20 10 + }"), "{ 20 10 + }")
@@ -211,16 +211,16 @@ mod test_stack_operations {
     fn test_swap_pop() {
         assert_eq!(t("10 20 swap pop"), "20");
     }
-    //
-    // #[test]
-    // fn test_dup_swap_pop() {
-    //     assert_eq!(t("10 dup dup + swap pop"), "20");
-    // }
-    //
-    // #[test]
-    // fn test_swap_dup_div() {
-    //     assert_eq!(t("10 20 swap dup + div"), "1");
-    // }
+
+    #[test]
+    fn test_dup_swap_pop() {
+        assert_eq!(t("10 dup dup + swap pop"), "20");
+    }
+
+    #[test]
+    fn test_swap_dup_div() {
+        assert_eq!(t("10 20 swap dup + div"), "1");
+    }
 }
 
 mod test_length {
@@ -272,12 +272,12 @@ mod test_lists {
     fn test_list_creation() {
         assert_eq!(t("[ 1 2 3 ]"), "[1,2,3]");
     }
-    //
-    // #[test]
-    // fn test_mixed_list_creation() {
-    //     assert_eq!(t("[ 1 \" bob \" ]"), "[1,\"bob\"]");
-    // }
-    //
+
+    #[test]
+    fn test_mixed_list_creation() {
+        assert_eq!(t("[ 1 \" bob \" ]"), "[1,\"bob\"]");
+    }
+
     #[test]
     fn test_list_empty_false() {
         assert_eq!(t("[ 1 2 ] empty"), "False");
@@ -302,7 +302,7 @@ mod test_lists {
     fn test_list_tail() {
         assert_eq!(t("[ 1 2 3 ] tail"), "[2,3]");
     }
-//
+
 //     #[test]
 //     fn test_list_cons() {
 //         assert_eq!(t("1 [ ] cons"), "[1]");
@@ -383,13 +383,13 @@ mod test_lists {
 //     }
 // }
 
-// mod test_assignments {
-//     use bprog::t;
-//     #[test]
-//     fn test_variable_name() {
-//         assert_eq!(t("age"), "age");
-//     }
-//
+mod test_assignments {
+    use bprog::t;
+    // #[test]
+    // fn test_variable_name() {
+    //     assert_eq!(t("age"), "age");
+    // }
+
 //     #[test]
 //     fn test_variable_assignment() {
 //         assert_eq!(t("age 10 := age"), "10");
@@ -409,8 +409,8 @@ mod test_lists {
 //     fn test_variable_update() {
 //         assert_eq!(t("age 20 := [ 10 age ]"), "[10,20]");
 //     }
-//
-// }
+
+}
 
 // mod test_quotations {
 //     use bprog::t;

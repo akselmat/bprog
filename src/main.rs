@@ -2,7 +2,7 @@
 use std::io::{self, Write}; // for input/output operations
 extern crate bprog;
 use bprog::{parser::*,interpreter::*};
-
+use bprog::stack::Stack;
 
 
 fn main() {
@@ -15,7 +15,8 @@ fn main() {
 
     // let input = " \" 23  \" parseInteger ";
     // let input = " 23 ";
-    let input = " 2 33 swap ";
+    let input = " 10 20 pop ";
+
 
     println!("string tokens : {:?}", input);
     let split_tok = split_into_tokens(input);
@@ -24,23 +25,27 @@ fn main() {
     let mut parser = Parser::new(input);
     match parser.parse() {
         Ok(results) => {
-            println!("results: {:?}", results.clone());
-            println!("tokens interpret: {:?}", interpret(results.clone()));
-            let result = interpret(results.clone());
-            match result {
-                Ok(token) => println!("{:?}", token.to_string()),
+            println!("parser: {:?}", results.clone());
+            // println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
+            match interpret(results.clone()) {
+                Ok(tokens) => println!("tokens interpret [{}]", tokens.iter()
+                        .map(|token| token.to_string())
+                        .collect::<Vec<_>>()
+                        .join(" ")),
                 Err(e) => println!("Error: {:?}", e),
             }
-            // println!("tokens: {:?}", results);
-            // if let Err(e) = interpret(results){
-            //     println!("Error during parsing: {:?}", e);
-            // }
         },
         Err(e) => {
             // If there was an error during parsing, print the error
             println!("Error during parsing: {:?}", e);
         }
     }
+    let mut stack = Stack::new();
+    let stackkk = stack.elements;
+    for v in stackkk {
+        println!("stack ellements {:?}", v);
+    }
+
 
     // match parser.parse() {
     //     Ok(_) => {
