@@ -15,7 +15,8 @@ fn main() {
 
     // let input = " \" 23  \" parseInteger ";
     // let input = " 23 ";
-    let input = " 10 20 pop ";
+
+    let input = "  [ 99 ] [ 2 3 ] append ";
 
 
     println!("string tokens : {:?}", input);

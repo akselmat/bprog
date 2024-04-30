@@ -4,6 +4,7 @@ use std::io::empty;
 use crate::stack::Stack;
 use crate::token::{Token};
 use crate::errors::{ProgramError};
+use crate::token::Token::Arithmetic;
 
 pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
     let mut stack = Stack::new();
@@ -32,9 +33,8 @@ pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
 
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
-        // "head"|"tail"|"empty"|"length"|"cons"|"append"|"each"|"map"
         // |"cons"|"append"|"each"|"map"
-        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"==" => binary_op(op, stack),
+        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append" => binary_op(op, stack),
         "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
         "swap"|"dup"|"pop" => stack_op(op, stack),
 
@@ -43,23 +43,11 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
 }
 
 // stack operations
-// fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-//     match op {
-//         "pop" => stack.pop()?,
-//         "dup" => stack.dup()?,
-//         // "swap" => stack.swap()?,
-//         _ => return Err(ProgramError::UnknownOperation),
-//     };
-//     Ok(())
-// }
 fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
-        "pop" => {
-            stack.pop()?;
-        },
-        "dup" => {
-            stack.dup()?;
-        },
+        "dup" => stack.dup()?,
+        "swap" => stack.swap()?,
+        "pop" => { stack.pop()?;},
         _ => return Err(ProgramError::UnknownOperation),
     };
     Ok(())
@@ -85,6 +73,8 @@ fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         ">" => less_then_left(left, right)?,
         "<" => less_then_right(left, right)?,
         "==" => equal(left, right)?,
+        "cons" => cons(left, right)?,
+        "append" => append(left, right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
     };
 
@@ -256,7 +246,8 @@ fn not(right: Token) -> Result<Token, ProgramError> {
     }
 }
 
-// functinos
+
+// List operations
 fn head(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) => Ok(Token::String(a[0..1].to_owned())),
@@ -264,7 +255,6 @@ fn head(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
-// functinos
 fn tail(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) =>  Ok(Token::String(a[1..].to_owned())),
@@ -272,7 +262,6 @@ fn tail(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
-// functinos
 fn emptyy(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) =>  Ok(Token::Bool(a.is_empty())),
@@ -280,8 +269,6 @@ fn emptyy(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
-
-// functinos
 fn length(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) => Ok(Token::Int(a.len() as i128)),
@@ -289,6 +276,27 @@ fn length(right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
+
+fn cons(left: Token, right: Token) -> Result<Token, ProgramError> {
+    match (left, right) {
+        (Token::Int(a), Token::List(b)) => Ok(Token::List([vec![Token::Int(a)], b].concat())),
+        (Token::Float(a), Token::List(b)) => Ok(Token::List([vec![Token::Float(a)], b].concat())),
+        (Token::Bool(a), Token::List(b)) => Ok(Token::List([vec![Token::Bool(a)], b].concat())),
+        (Token::String(a), Token::List(b)) => Ok(Token::List([vec![Token::String(a)], b].concat())),
+        (Token::List(a), Token::List(b)) => Ok(Token::List([vec![Token::List(a)], b].concat())),
+        _ => Err(ProgramError::ExpectedList),
+    }
+}
+fn append(left: Token, right: Token) -> Result<Token, ProgramError> {
+    match (left, right) {
+        (Token::List(mut a), Token::List(b)) => {
+            a.extend(b);  // Extend the first vector with the second
+            Ok(Token::List(a))  // Return the modified first list as a result
+        },
+        _ => Err(ProgramError::ExpectedList),
+    }
+}
+
 
 
 

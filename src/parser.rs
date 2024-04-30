@@ -71,7 +71,7 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             "div"|"+"| "-" | "*" | "/"| "swap"|"pop"|"dup" => is_arithmetic(current, index, tokens)?,
             "True"|"False" => is_bool(current, index, tokens)?,
             "not"|"&&"|"||"|">"|"<"|"==" => is_logical(current, index, tokens)?,
-            "head"|"tail"|"empty"|"length"|"cons"|"append"|"each"|"map" => is_list_operations(current, index, tokens)?,
+            "head"|"tail"|"empty"|"length"|"cons"|"append"|"each"|"map"|"cons"|"append" => is_list_operations(current, index, tokens)?,
             // "parseInteger"|"parseFloat"|"words" => is_string_parsing(current, index, tokens)?,
             _ => Err(ParserError::UnexpectedToken)?
         }
