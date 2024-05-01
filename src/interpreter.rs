@@ -3,67 +3,104 @@
 use std::io::empty;
 use crate::stack::Stack;
 use crate::token::{Token};
-use crate::errors::{ProgramError};
+use crate::errors::{ParserError, ProgramError};
 use crate::token::Token::Arithmetic;
 use std::collections::HashMap;
+use crate::parser::{Parser, split_into_tokens};
+use crate::t;
 
-pub fn interpret(tokens: Vec<Token>) -> Result<Vec<Token>, ProgramError> {
-    let mut stack = Stack::new();
-    let mut symbols: HashMap<String, Token> = HashMap::new();
+#[derive(Debug, Clone, PartialEq)]
+pub struct Interpreter {
+    stack: Stack,
+    symbols: HashMap<String, Token>,
+    tokens: Vec<Token>,
+}
 
+impl Interpreter {
+    // Constructor that initializes an interpreter with a list of tokens
+    pub fn new(tokens: Vec<Token>) -> Self {
+        Self {
+            stack: Stack::new(),
+            symbols: HashMap::new(),
+            tokens,
+        }
+    }
+
+    // Method to execute the interpreter
+    pub fn interpret(&mut self) -> Result<Vec<Token>, ProgramError> {
+        // let result = interpretor(&self.tokens, &mut self.symbols, &mut self.stack);
+        // match result {
+        //     Ok(()) => Ok(result),
+        //     Err(_) => Err(ParserError::UnexpectedEndOfInput)
+        // }
+        interpretor(&self.tokens, &mut self.symbols, &mut self.stack);
+        // After processing all tokens, check if the stack is empty
+        if self.stack.elements.is_empty() {
+            Err(ProgramError::StackEmpty)
+        } else {
+            Ok(self.stack.elements.clone()) // Return a copy of the stack's elements
+        }
+    }
+}
+
+// prøver noen nytt!!
+pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     for token in tokens {
-        match token.clone() {
-            Token::Symbol(symbol) => {
-                handle_symbol(token, &symbol, &mut symbols, &mut stack)?;
+        match token {
+            Token::Int(value) => {
+                stack.push(Token::Int(*value));
             },
-            Token::Int(_) | Token::Float(_) | Token::Bool(_) |
-            Token::String(_) | Token::Block(_) => {
-                stack.push(token);
+            Token::Float(value) => {
+                stack.push(Token::Float(*value));
             },
-            Token::List(items) => {
-                let evaluated_list = construct_list(&items, &symbols)?;
-                stack.push(evaluated_list);
+            Token::Bool(value) => {
+                stack.push(Token::Bool(*value));
+            },
+            Token::String(value) => {
+                stack.push(Token::String(value.clone()));
+            },
+            Token::Symbol(sym) => {
+                handle_symbol(&sym, symbols, stack)?;
+            },
+            Token::Block(inner_tokens) => {
+                // Optionally create a new stack or use the existing one
+                // depending on whether you want isolated or shared stack spaces
+                interpretor(inner_tokens, symbols, stack)?;
+            },
+            Token::List(inner_tokens) => {
+                // For a list, you might want to push the entire evaluated list back onto the stack
+                let mut list_stack = Stack::new();
+                interpretor(inner_tokens, symbols, &mut list_stack)?;
+                stack.push(Token::List(list_stack.elements));
+            },
+            Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
+                execute_operation(&op, stack)?;
             },
 
-            Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
-                execute_operation(&op, &mut stack)?;
-            },
             _ => return Err(ProgramError::UnsupportedType),
         }
     }
+    Ok(())
+}
 
-    if stack.elements.is_empty() {
-        Err(ProgramError::StackEmpty)
-    } else {
-        Ok(stack.elements)  // Return all remaining elements as a vector
+
+pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    match op {
+        // |"cons"|"append"|"each"|"map"
+        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append" => binary_op(op, stack),
+        "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
+        "swap"|"dup"|"pop" => stack_op(op, stack),
+        // ":=" => handle_assignment(symbols, stack, symbol),
+        _ => Err(ProgramError::UnknownOperation),
     }
 }
 
-fn construct_list(tokens: &[Token], symbols: &HashMap<String, Token>) -> Result<Token, ProgramError> {
-    let mut list_items = Vec::new();
-    for token in tokens {
-        match token {
-            Token::List(inner_tokens) => {
-                // Recursively evaluate inner lists
-                let evaluated_list = construct_list(inner_tokens, symbols)?;
-                list_items.push(evaluated_list);
-            },
-            Token::Symbol(sym) if symbols.contains_key(sym) => {
-                // Directly substitute the symbol with its corresponding value
-                list_items.push(symbols[sym].clone());
-            },
-            _ => list_items.push(token.clone()), // For other tokens, add them as they are
-        }
-    }
-    Ok(Token::List(list_items))
-}
-
-fn handle_symbol(token: Token, symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    if symbol == ":=" {
+fn handle_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+    if symbol == ":=" {  // if assignment
         handle_assignment(symbols, stack)?;
-    } else {
+    } else { // check if symbol exist
         if let Err(_) = execute_symbol(symbol, symbols, stack){
-            stack.push(token);
+            stack.push(Token::Symbol(symbol.to_string()));
         }
     }
     Ok(())
@@ -97,24 +134,6 @@ fn handle_assignment(symbols: &mut HashMap<String, Token>, stack: &mut Stack) ->
     }
     Ok(())
 }
-
-
-
-
-
-
-
-pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-    match op {
-        // |"cons"|"append"|"each"|"map"
-        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append" => binary_op(op, stack),
-        "not"|"head"|"tail"|"empty"|"length"|"exec" => unary_op(op, stack),
-        "swap"|"dup"|"pop" => stack_op(op, stack),
-        // ":=" => handle_assignment(symbols, stack, symbol),
-        _ => Err(ProgramError::UnknownOperation),
-    }
-}
-
 
 // stack operations
 fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
@@ -186,9 +205,12 @@ fn mul(left: Token, right: Token) -> Result<Token, ProgramError> {
     }
 }
 fn fdiv(left: Token, right: Token) -> Result<Token, ProgramError> {
-    if let Token::Int(0) | Token::Float(0.0) = right { // check for division by zero
-        return Err(ProgramError::DivisionByZero);
+    match right {
+        Token::Int(0) => return Err(ProgramError::DivisionByZero),
+        Token::Float(b) if b == 0.0 => return Err(ProgramError::DivisionByZero),
+        _ => {},
     }
+
     match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Float((a / b) as f64)),
         (Token::Float(a), Token::Float(b)) => Ok(Token::Float(a / b)),
@@ -198,9 +220,12 @@ fn fdiv(left: Token, right: Token) -> Result<Token, ProgramError> {
     }
 }
 fn div(left: Token, right: Token) -> Result<Token, ProgramError> {
-    if let Token::Int(0) | Token::Float(0.0) = right { // check for division by zero
-        return Err(ProgramError::DivisionByZero);
+    match right {
+        Token::Int(0) => return Err(ProgramError::DivisionByZero),
+        Token::Float(b) if b == 0.0 => return Err(ProgramError::DivisionByZero),
+        _ => {},
     }
+
     match (left, right) {
         (Token::Int(a), Token::Int(b)) => Ok(Token::Int(a / b)),
         (Token::Float(a), Token::Float(b)) => Ok(Token::Int((a / b) as i128 )),
@@ -305,25 +330,13 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         "tail" => tail(right)?,
         "empty" => emptyy(right)?,
         "length" => length(right)?,
-        // "exec" => exec(right)?,
-        // "pop" => stack.pop()?,
-        // "dup" => stack.dup()?,
         _ => Err(ProgramError::UnsupportedType)?
     };
 
     stack.push(result);
     Ok(())
 }
-fn exec(right: Token) -> Result<Token, ProgramError> {
-    match right {
 
-        // Token::Int(a)  => Ok(Token::Int(-(a))),
-        // Token::Float(a) => Ok(Token::Float(-(a))),
-        // Token::Bool(a) => Ok(Token::Bool((!a))),
-        _ => Err(ProgramError::ExpectedBoolOrNumber),
-
-    }
-}
 
 
 
@@ -353,6 +366,7 @@ fn length(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) => Ok(Token::Int(a.len() as i128)),
         Token::List(a) =>Ok(Token::Int(a.len() as i128)),
+        Token::Block(a) =>Ok(Token::Int(a.len() as i128)),
         _ => Err(ProgramError::ExpectedEnumerable),
     }
 }
@@ -376,8 +390,3 @@ fn append(left: Token, right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedList),
     }
 }
-
-
-
-
-

@@ -59,29 +59,19 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             },
             "{" => {
                 *index += 1;
-                let mut new_current = vec![];
-                nest(&mut new_current, level, index, tokens)?;
-                current.push(Token::Block(new_current));
+                *level += 1;
+                let mut block_tokens = vec![];
+                nest(&mut block_tokens, level, index, tokens)?;
+                current.push(Token::Block(block_tokens));
             },
             "}" => {
+                if *level == 0 {
+                    return Err(ParserError::UnmatchedClosingBracket);
+                }
                 *index += 1;
+                *level -= 1;
                 return Ok(());
             },
-            // "{" => {
-            //     *index += 1;
-            //     *level += 1;
-            //     let mut new_current = vec![];
-            //     nest(&mut new_current, level, index, tokens)?;
-            //     current.push(Token::Block(new_current));
-            // },
-            // "}" => {
-            //     if *level == 0 {
-            //         return Err(ParserError::UnmatchedClosingBracket);
-            //     }
-            //     *index += 1;
-            //     *level -= 1;
-            //     return Ok(());
-            // },
             _ if token.parse::<i128>().is_ok() => create_int(current, index, tokens)?,
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,

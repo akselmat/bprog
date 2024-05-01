@@ -20,9 +20,9 @@ impl Stack {
         self.elements.pop().ok_or(ProgramError::StackEmpty)
     }
 
-    // pub fn top(&self) -> Result<&Token, ProgramError> {
-    //     self.elements.last().ok_or(ProgramError::StackEmpty)
-    // }
+    pub fn top(&self) -> Result<&Token, ProgramError> {
+        self.elements.last().ok_or(ProgramError::StackEmpty)
+    }
 
     pub fn dup(&mut self) -> Result<(), ProgramError> {
         println!("top element:{:?}", self.elements.last().clone());
@@ -46,8 +46,6 @@ impl Stack {
     pub fn discard(&mut self) -> Result<(), ProgramError> {
         self.pop().map(|_| ()) // Pop the top element and ignore it
     }
-
-
 
 }
 

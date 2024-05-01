@@ -240,10 +240,10 @@ mod test_length {
         assert_eq!(t("[ 1 2 3 [ ] ] length"), "4");
     }
 
-    // #[test]
-    // fn test_block_length() {
-    //     assert_eq!(t("{ 10 20 + } length"), "3");
-    // }
+    #[test]
+    fn test_block_length() {
+        assert_eq!(t("{ 10 20 + } length"), "3");
+    }
 }
 
 // mod test_string_parsing {
@@ -415,20 +415,20 @@ mod test_assignments {
 mod test_quotations {
     use bprog::t;
 
-//     #[test]
-//     fn test_exec_block() {
-//         assert_eq!(t("{ 20 10 + } exec"), "30");
-//     }
+    #[test]
+    fn test_exec_block() {
+        assert_eq!(t("{ 20 10 + } exec"), "30");
+    }
 //
 //     #[test]
 //     fn test_exec_block_with_value() {
 //         assert_eq!(t("10 { 20 + } exec"), "30");
 //     }
 //
-//     #[test]
-//     fn test_exec_block_with_two_values() {
-//         assert_eq!(t("10 20 { + } exec"), "30");
-//     }
+    #[test]
+    fn test_exec_block_with_two_values() {
+        assert_eq!(t("10 20 { + } exec"), "30");
+    }
 //
 //     #[test]
 //     fn test_exec_nested_block() {
