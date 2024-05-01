@@ -18,17 +18,19 @@ fn main() {
     // let input = "  [ 1 2 3 ] ";
     // let input = "  { 1 2 + }    ";
     // let input = " age 10 := age ";
-    // let input = " { 20 10 + } ";
 
-    // let input = " age 20 := [  [ age ]  ] ";
+    // let input = " age 20.0 :=  age  ";
+    // let input = " name \" Mariusz \" := name ";
+    // let input = " { 20 10 + } ";
     // let input = " 1 2 { + } ";
     // let input = " 1 2 { + } exec ";
+    let input = " 22 inc { 1 + } fun ";
 
 
 
 
     // nYYY!!!
-    let input = "age 20 := [ 10 [ 11 [ age ] ] 99 ]";
+    // let input = "age 20 := [ 10 [ 11 [ age ] ] 99 ]";
     let mut parser = Parser::new(input);
 
     match parser.parse() {

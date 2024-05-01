@@ -38,7 +38,5 @@ pub enum ParserError {
 
 
     // nyy
-    UnexpectedEndOfInput, // ny
-    UnmatchedQuotes, // ny
-    UnmatchedClosingBracket, // ny
+    UnexpectedEndOfInput,
 }
