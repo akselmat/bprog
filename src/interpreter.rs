@@ -3,10 +3,25 @@
 use crate::stack::Stack;
 use crate::token::{Token};
 use crate::errors::{ParserError, ProgramError};
-use crate::token::Token::Arithmetic;
+use crate::token::Token::{Arithmetic, Block};
 use std::collections::HashMap;
+use std::f32::consts::E;
 use crate::parser::{Parser, split_into_tokens};
 use crate::t;
+
+// Token::Symbol(sym) => {
+//     handle_symbol(&sym, symbols, stack)?;
+// },
+// Token::Symbol(sym) if sym == "exec" => {
+//     // Execute the top block if 'exec' is encountered
+//     execute_block(symbols, stack)?;
+// },
+// Token::Block(inner_tokens) => {
+//     // Optionally create a new stack or use the existing one
+//     // depending on whether you want isolated or shared stack spaces
+//     // interpretor(inner_tokens, symbols, stack)?;
+// },
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Interpreter {
@@ -58,7 +73,13 @@ pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, s
             },
             Token::Block(inner_tokens) => {
                 // Push the whole block onto the stack without executing it
-                stack.push(Token::Block(inner_tokens.clone()));
+                println!("if BLOCKK");
+                if let Some(_) = symbols.get("map") {
+                    stack.push(Token::Block(inner_tokens.clone())); // push the block into the stack
+                    execute_map(stack)?;
+                } else {
+                    stack.push(Token::Block(inner_tokens.clone()));
+                }
             },
             Token::List(inner_tokens) => {
                 // For a list, you might want to push the entire evaluated list back onto the stack
@@ -69,30 +90,48 @@ pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, s
             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
                 execute_operation(&op, stack)?;
             },
-            // Token::Symbol(sym) => {
-            //     handle_symbol(&sym, symbols, stack)?;
-            // },
-            // Token::Symbol(sym) if sym == "exec" => {
-            //     // Execute the top block if 'exec' is encountered
-            //     execute_block(symbols, stack)?;
-            // },
-            // Token::Block(inner_tokens) => {
-            //     // Optionally create a new stack or use the existing one
-            //     // depending on whether you want isolated or shared stack spaces
-            //     // interpretor(inner_tokens, symbols, stack)?;
-            // },
-
             _ => return Err(ProgramError::UnsupportedType),
         }
     }
     Ok(())
 }
 
+fn execute_map(stack: &mut Stack) -> Result<(), ProgramError> {
+    // Pop the quotation and the list from the stack
+    let quotation = stack.pop()?;
+    let list_token = stack.pop()?;
+
+    match (list_token, quotation) {
+        // (Token::List(elements), Token::Block(ops) | Token::Symbol(op)) => {
+        (Token::List(elements), Token::Block(ops)) => {
+            let mut new_list = vec![];
+            // Apply the block to each element in the list
+            for element in elements {
+                stack.push(element.clone()); // Push the element onto the stack
+                interpretor(&ops, &mut HashMap::new(), stack)?; // Execute the block
+                if let Ok(result) = stack.pop() {
+                    new_list.push(result); // Collect the result
+                }
+            }
+            stack.push(Token::List(new_list)); // Push the new list onto the stack
+            Ok(())
+        },
+        _ => Err(ProgramError::ExpectedListAndQuotation),
+    }
+}
+
+
+
+
 // Function to execute a block
 fn execute_block(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("FN execute_block ------------------------");  //--
+    println!("current: stack: {:?}", stack.elements.clone()); // current stack
     let block_token = stack.pop()?;
+    println!("block_token {:?}", block_token);
     if let Token::Block(inner_tokens) = block_token {
         // Recursively interpret the block's tokens
+        println!("interpretor(&inner_tokens, symbols, stack)?!");
         interpretor(&inner_tokens, symbols, stack)?;
     } else {
         return Err(ProgramError::ExpectedQuotation);
@@ -104,7 +143,7 @@ fn execute_block(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Res
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
         // |"cons"|"append"|"each"|"map"
-        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append" => binary_op(op, stack),
+        "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append"|"map" => binary_op(op, stack),
         "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
         "swap"|"dup"|"pop" => stack_op(op, stack),
         // ":=" => handle_assignment(symbols, stack, symbol),
@@ -113,47 +152,71 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
 }
 
 fn handle_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("FN handle_symbol-------------------------");
     match symbol {
         "exec" => execute_block(symbols, stack)?,
         "fun" => define_func(symbols, stack)?,
+        "map" => {
+            symbols.insert("map".to_string(), Token::Symbol("".to_string()));
+        println!("insert into the map: ");
+        },
         ":=" => handle_assignment(symbols, stack)?,
         _ => {
-            if let Err(_) = execute_symbol(symbol, symbols, stack){
-                stack.push(Token::Symbol(symbol.to_string()));
-            }
+            execute_symbol(symbol, symbols, stack)?
         }
     }
     Ok(())
 }
 
+
+
 fn define_func(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("FN define_func!!!!!!!!!!!!");
     if stack.elements.len() < 2 {
         return Err(ProgramError::NotEnoughElements);
     }
+    println!("define func: stack elements:{:?}", stack.elements.clone());
     let right = stack.pop()?;
     let left = stack.pop()?;
+    println!("define_func left: {:?}", left.clone());
+    println!("define_func right: {:?}", right.clone());
 
     match (left, &right) {
         (Token::Symbol(a), Token::Block(b)) => {
-            println!("define_func right: {:?}", right.clone());
+            println!("symbols.insert: {:?}", right.clone());
             symbols.insert(a, right);  // Assign any function token to the symbol
         },
         _ => return Err(ProgramError::ExpectedVariable("Expected a symbol for variable assignment.".to_string())),
     }
     Ok(())
 }
-
-
-
-// Handling the execution of a symbol
 fn execute_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    if let Some(value) = symbols.get(symbol) {
-        stack.push(value.clone());
-    } else {
-        return Err(ProgramError::UnknownSymbol);
+    println!("FN execute_symbol!!!!!!!!!!!!!!!!!");
+    println!("stack elements: {:?}:", stack.elements.clone());
+    if let Some(token_value) = symbols.get(symbol) { // if key exist then get the value of that symbol
+        if let Token::Block(inner_tokens) = token_value { // if a function
+            println!("is a block value!! {:?}:", inner_tokens.clone());
+            stack.push(token_value.clone());               // push tokens to stack
+            execute_block(symbols, stack)?
+        } else {
+            stack.push(token_value.clone());               // if a variable then push to stack
+        }
+    } else {                                                // if the symbol dosen't exist
+        stack.push(Token::Symbol(symbol.to_string()));      // push it to the stack
     }
     Ok(())
 }
+
+
+// Handling the execution of a symbol
+// fn execute_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+//     if let Some(value) = symbols.get(symbol) { // if key exist then get the value of that symbol
+//         stack.push(value.clone());             // and push it into stack
+//     } else {
+//         return Err(ProgramError::UnknownSymbol);
+//     }
+//     Ok(())
+// }
 
 fn handle_assignment(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     if stack.elements.len() < 2 {
@@ -184,15 +247,38 @@ fn stack_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     };
     Ok(())
 }
+// unary_operations:
+fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("unary_op:");
+    if stack.elements.is_empty() {
+        return Err(ProgramError::StackEmpty);
+    }
+    let right = stack.pop()?;
 
+    let result = match op {
+        "not" => not(right)?,
+        "head" => head(right)?,
+        "tail" => tail(right)?,
+        "empty" => emptyy(right)?,
+        "length" => length(right)?,
+        _ => Err(ProgramError::UnsupportedType)?
+    };
+
+    stack.push(result);
+    Ok(())
+}
 
 // binary_operation
 fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
+    println!("FN binary_op--------------:");
+    println!("stack elements: {:?}", stack.elements.clone());
     if stack.elements.len() < 2 {
         return Err(ProgramError::NotEnoughElements);
     }
     let right = stack.pop()?;
+    println!("rigth: {:?}",right.clone());
     let left = stack.pop()?;
+    println!("left: {:?}", left.clone());
 
     let result = match op {
         "+" => add(left, right)?,
@@ -207,12 +293,26 @@ fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         "==" => equal(left, right)?,
         "cons" => cons(left, right)?,
         "append" => append(left, right)?,
+        // "map" => map(left, right)?,
         _ => unreachable!(), // Since we check op in execute_operation, this should never happen
     };
 
     stack.push(result);
     Ok(())
 }
+// // List operations
+// fn map(left: Token, right: Token) -> Result<Token, ProgramError> {
+//     println!("rigth: {:?}",right.clone());
+//     println!("left: {:?}", left.clone());
+//
+//
+//
+//     // Ok(Token::Symbol(right))
+//     // Err()
+//
+// }
+
+
 
 
 // simple arithmetic && arithmetic with type coercion
@@ -355,31 +455,9 @@ fn equal(left: Token, right: Token) -> Result<Token, ProgramError> {
 }
 
 
-// unary_operations:
-fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-    println!("unary_op:");
-    if stack.elements.is_empty() {
-        return Err(ProgramError::StackEmpty);
-    }
-    let right = stack.pop()?;
-
-    let result = match op {
-        "not" => not(right)?,
-        "head" => head(right)?,
-        "tail" => tail(right)?,
-        "empty" => emptyy(right)?,
-        "length" => length(right)?,
-        _ => Err(ProgramError::UnsupportedType)?
-    };
-
-    stack.push(result);
-    Ok(())
-}
 
 
 
-
-// List operations
 fn head(right: Token) -> Result<Token, ProgramError> {
     match (right) {
         Token::String(a) => Ok(Token::String(a[0..1].to_owned())),
@@ -412,13 +490,20 @@ fn length(right: Token) -> Result<Token, ProgramError> {
 
 fn cons(left: Token, right: Token) -> Result<Token, ProgramError> {
     match (left, right) {
-        (Token::Int(a), Token::List(b)) => Ok(Token::List([vec![Token::Int(a)], b].concat())),
-        (Token::Float(a), Token::List(b)) => Ok(Token::List([vec![Token::Float(a)], b].concat())),
-        (Token::Bool(a), Token::List(b)) => Ok(Token::List([vec![Token::Bool(a)], b].concat())),
-        (Token::String(a), Token::List(b)) => Ok(Token::List([vec![Token::String(a)], b].concat())),
-        (Token::List(a), Token::List(b)) => Ok(Token::List([vec![Token::List(a)], b].concat())),
+        (a, Token::List(b)) => Ok(Token::List([vec![a], b].concat())),
         _ => Err(ProgramError::ExpectedList),
     }
+
+    // match (left, right) {
+    //     (Token::Int(a), Token::List(b)) => Ok(Token::List([vec![Token::Int(a)], b].concat())),
+    //     (Token::Float(a), Token::List(b)) => Ok(Token::List([vec![Token::Float(a)], b].concat())),
+    //     (Token::Bool(a), Token::List(b)) => Ok(Token::List([vec![Token::Bool(a)], b].concat())),
+    //     (Token::String(a), Token::List(b)) => Ok(Token::List([vec![Token::String(a)], b].concat())),
+    //     (Token::List(a), Token::List(b)) => Ok(Token::List([vec![Token::List(a)], b].concat())),
+    //     _ => Err(ProgramError::ExpectedList),
+    // }
+
+
 }
 fn append(left: Token, right: Token) -> Result<Token, ProgramError> {
     match (left, right) {

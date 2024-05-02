@@ -23,6 +23,9 @@ pub enum ProgramError {
     UnsupportedType,
     UnmatchedClosingBracket,
     IncompleteString,
+    ExpectedListAndQuotation
+
+
 }
 
 // Represents parser errors.

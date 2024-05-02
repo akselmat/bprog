@@ -61,10 +61,10 @@ mod test_literals {
         assert_eq!(t("{ 20 10 + }"), "{ 20 10 + }")
     }
 
-    // #[test]
-    // fn test_literal_list_of_blocks() {
-    //     assert_eq!(t("[ { + } { 10 + } { 20 10 + } ]"), "[{ + },{ 10 + },{ 20 10 + }]")
-    // }
+    #[test]
+    fn test_literal_list_of_blocks() {
+        assert_eq!(t("[ { + } { 10 + } { 20 10 + } ]"), "[{ + },{ 10 + },{ 20 10 + }]")
+    }
 }
 
 
@@ -547,14 +547,14 @@ mod test_times {
 //     }
 // }
 //
-// mod test_functions {
-//     use bprog::t;
-//
-//     #[test]
-//     fn test_odd_function() {
-//         assert_eq!(t("odd { dup 2 div swap 2 / == if False True } fun \
-//                   2 odd"), "False");
-//     }
+mod test_functions {
+    use bprog::t;
+
+    // #[test]
+    // fn test_odd_function() {
+    //     assert_eq!(t("odd { dup 2 div swap 2 / == if False True } fun \
+    //               2 odd"), "False");
+    // }
 //
 //     #[test]
 //     fn test_odd_function_true_case() {
@@ -582,14 +582,14 @@ mod test_times {
 //                   gen1toNum { max swap := 1 loop { dup max > } { dup 1 + } } fun \
 //                   4 gen1toNum 5 toList map odd"), "[True,False,True,False,True]");
 //     }
-//
-//     #[test]
-//     fn test_inc_function() {
-//         assert_eq!(t("inc { 1 + } fun 1 inc"), "2");
-//     }
-//
-//     #[test]
-//     fn test_mul10_and_inc_functions() {
-//         assert_eq!(t("mul10 { 10 * } fun inc { 1 + } fun 10 inc mul10"), "110");
-//     }
-// }
+
+    #[test]
+    fn test_inc_function() {
+        assert_eq!(t("inc { 1 + } fun 1 inc"), "2");
+    }
+
+    #[test]
+    fn test_mul10_and_inc_functions() {
+        assert_eq!(t("mul10 { 10 * } fun inc { 1 + } fun 10 inc mul10"), "110");
+    }
+}

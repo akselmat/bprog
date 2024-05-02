@@ -24,9 +24,13 @@ fn main() {
     // let input = " { 20 10 + } ";
     // let input = " 1 2 { + } ";
     // let input = " 1 2 { + } exec ";
-    let input = " 22 inc { 1 + } fun ";
-
-
+    // let input = " inc { 1 + } fun 1 inc ";
+    // let input = " inc { 9 + } fun inc ";
+    // let input = " 1 { 9 + } exec ";
+    // let input = " inc { 2 + } fun 1 inc ";
+    // let input = " inc { 2 + } fun 1 inc ";
+    let input = " [ 1 2 3 ] map { 2 * }  ";
+    // let input = " 1 2 3  ";
 
 
     // nYYY!!!
@@ -51,44 +55,42 @@ fn main() {
         },
         Err(e) => println!("Error during parsing: {:?}", e),
     }
-
-
-
-
-
-    // gammel
-    // println!("string tokens : {:?}", input);
-    // let split_tok = split_into_tokens(input);
-    // println!("string tokens split : {:?}", split_tok);
-    // let input = " age 20 :=  [ 10  [ 11 [ age ] ] 99 ] ";
-    // let mut parser = Parser::new(input);
-    // match parser.parse() {
-    //     Ok(results) => {
-    //         println!("parser: {:?}", results.clone());
-    //         // println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
-    //         match interpret(results.clone()) {
-    //             Ok(tokens) => println!("tokens interpret {:?}", tokens.iter()
-    //                 .map(|token| token.to_string())
-    //                 .collect::<Vec<_>>()
-    //                 .join(" ")),
-    //             Err(e) => println!("Error: {:?}", e),
-    //         }
-    //     },
-    //     Err(e) => {
-    //         // If there was an error during parsing, print the error
-    //         println!("Error during parsing: {:?}", e);
-    //     }
-    // }
-    // let mut stack = Stack::new();
-    // let stackkk = stack.elements;
-    // for v in stackkk {
-    //     println!("stack ellements {:?}", v);
-    // }
-
-
 }
 
 
+
+
+
+
+
+// gammel
+// println!("string tokens : {:?}", input);
+// let split_tok = split_into_tokens(input);
+// println!("string tokens split : {:?}", split_tok);
+// let input = " age 20 :=  [ 10  [ 11 [ age ] ] 99 ] ";
+// let mut parser = Parser::new(input);
+// match parser.parse() {
+//     Ok(results) => {
+//         println!("parser: {:?}", results.clone());
+//         // println!("tokens interpret: {:?}", interpret(results.clone()).unwrap());
+//         match interpret(results.clone()) {
+//             Ok(tokens) => println!("tokens interpret {:?}", tokens.iter()
+//                 .map(|token| token.to_string())
+//                 .collect::<Vec<_>>()
+//                 .join(" ")),
+//             Err(e) => println!("Error: {:?}", e),
+//         }
+//     },
+//     Err(e) => {
+//         // If there was an error during parsing, print the error
+//         println!("Error during parsing: {:?}", e);
+//     }
+// }
+// let mut stack = Stack::new();
+// let stackkk = stack.elements;
+// for v in stackkk {
+//     println!("stack ellements {:?}", v);
+// }
 
 
 // fn run(input: &str) {
