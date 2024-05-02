@@ -49,7 +49,7 @@ pub fn t(input: &str) -> String {
             println!("Parser output: {:?}", tokens);
             let mut interpreter = Interpreter::new(tokens);
             match interpreter.interpret() {
-                Ok(output) => format!("{}", output.iter()
+                Ok(stack) => format!("{}", stack.elements.iter()
                     .map(|token| token.to_string())
                     .collect::<Vec<_>>()
                     .join(" "))
@@ -59,6 +59,25 @@ pub fn t(input: &str) -> String {
         },
         Err(e) => format!("Error during parsing: {:?}", e),
     }
+
+
+    // match parser.parse() {
+    //     Ok(tokens) => {
+    //         println!("Parser output: {:?}", tokens);
+    //         let mut interpreter = Interpreter::new(tokens);
+    //         match interpreter.interpret() {
+    //             Ok(output) => format!("{}", output.iter()
+    //                 .map(|token| token.to_string())
+    //                 .collect::<Vec<_>>()
+    //                 .join(" "))
+    //             ,
+    //             Err(e) => format!("Error: {:?}", e),
+    //         }
+    //     },
+    //     Err(e) => format!("Error during parsing: {:?}", e),
+    // }
+
+
     // match parser.parse() {
     //     Ok(results) => {
     //         match interpretor(results) {

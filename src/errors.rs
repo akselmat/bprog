@@ -14,8 +14,6 @@ pub enum ProgramError {
     DivisionByZero,
     ProgramFinishedWithMultipleValues,
     NumberConversionError,
-
-
     // Ny
     UnknownOperation,
     NotEnoughElements,
@@ -34,12 +32,6 @@ pub enum ParserError {
     IncompleteString,
     IncompleteList,
     IncompleteQuotation,
-
-
-
-
-
-
     // nyy
     UnexpectedEndOfInput,
 }

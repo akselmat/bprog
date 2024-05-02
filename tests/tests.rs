@@ -67,7 +67,6 @@ mod test_literals {
     }
 }
 
-
 mod test_simple_arithmetic {
     use bprog::t;
 
@@ -246,7 +245,7 @@ mod test_length {
     }
 }
 
-// mod test_string_parsing {
+mod test_string_parsing {
 //     use bprog::t;
 //
 //     #[test]
@@ -263,7 +262,7 @@ mod test_length {
 //     fn test_words() {
 //         assert_eq!(t("\" adam bob charlie \" words"), "[\"adam\",\"bob\",\"charlie\"]");
 //     }
-// }
+}
 
 mod test_lists {
     use bprog::t;
@@ -331,17 +330,17 @@ mod test_lists {
 
 mod test_list_quotations {
     use bprog::t;
-//
-//     #[test]
-//     fn test_map_multiply() {
-//         assert_eq!(t("[ 1 2 3 ] map { 10 * }"), "[10,20,30]");
-//     }
-//
-//     #[test]
-//     fn test_map_add() {
-//         assert_eq!(t("[ 1 2 3 ] map { 1 + }"), "[2,3,4]");
-//     }
-//
+
+    #[test]
+    fn test_map_multiply() {
+        assert_eq!(t("[ 1 2 3 ] map { 10 * }"), "[10,20,30]");
+    }
+
+    #[test]
+    fn test_map_add() {
+        assert_eq!(t("[ 1 2 3 ] map { 1 + }"), "[2,3,4]");
+    }
+
 //     #[test]
 //     fn test_map_conditional() {
 //         assert_eq!(t("[ 1 2 3 4 ] map { dup 2 > if { 10 * } { 2 * } }"), "[2,4,30,40]");
@@ -441,9 +440,9 @@ mod test_quotations {
     }
 }
 
-// mod test_if {
-//     use bprog::t;
-//
+mod test_if {
+    use bprog::t;
+
 //     #[test]
 //     fn test_if_true() {
 //         assert_eq!(t("True if { 20 } { }"), "20");
@@ -468,7 +467,7 @@ mod test_quotations {
 //     fn test_if_nested() {
 //         assert_eq!(t("True if { False if { 50 } { 100 } } { 30 }"), "100");
 //     }
-// }
+}
 //
 // mod test_if_without_quotation {
 //     use bprog::t;
@@ -555,7 +554,7 @@ mod test_functions {
     //     assert_eq!(t("odd { dup 2 div swap 2 / == if False True } fun \
     //               2 odd"), "False");
     // }
-//
+
 //     #[test]
 //     fn test_odd_function_true_case() {
 //         assert_eq!(t("odd { dup 2 div swap 2 / == if False True } fun \

@@ -13,6 +13,10 @@ impl Stack {
     pub fn new() -> Self {
         Stack { elements: Vec::new() }
     }
+    pub fn get_elements(&mut self) -> Result<Vec<Token>, ProgramError> {
+        Ok(self.elements.clone())
+    }
+
     pub fn push(&mut self, token: Token) {
         self.elements.push(token);
     }
@@ -25,12 +29,9 @@ impl Stack {
     }
 
     pub fn dup(&mut self) -> Result<(), ProgramError> {
-        println!("top element:{:?}", self.elements.last().clone());
-        let top_element =  self.elements.last().ok_or(ProgramError::StackEmpty)?.clone();
-        println!("top element:{:?}", top_element.clone());
+        let top_element =  self.top()?;
         self.push(top_element.clone());
         Ok(())
-        // Ok(top_element)
     }
 
     pub fn swap(&mut self) -> Result<(), ProgramError> {
@@ -41,12 +42,13 @@ impl Stack {
         Ok(())
     }
 
-    // Removes the top element from the stack (already implemented as `pop()`)
-    // Adding `discard` method to emphasize the operation's purpose in some contexts
-    pub fn discard(&mut self) -> Result<(), ProgramError> {
-        self.pop().map(|_| ()) // Pop the top element and ignore it
-    }
+}
 
+// Implement the Display trait for the State struct.
+impl fmt::Display for Stack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}]", self.elements.iter().rev().map(|c| c.to_string()).collect::<Vec<String>>().join(","))
+    }
 }
 
 
