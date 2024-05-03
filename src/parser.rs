@@ -39,6 +39,7 @@ impl Parser  {
 // !!!!!!!!
 // FUNCTIONS
 fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
+    // let mut last_opened = None;
     while *index < tokens.len() {
         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
         match token {  // Convert String to &str for comparison
@@ -78,7 +79,6 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             "div"|"+"| "-" | "*" | "/"| "swap"|"pop"|"dup" => is_arithmetic(current, index, tokens)?,
             "True"|"False" => is_bool(current, index, tokens)?,
             "not"|"&&"|"||"|">"|"<"|"==" => is_logical(current, index, tokens)?,
-            // "head"|"tail"|"empty"|"length"|"append"|"each"|"cons"|"append"|"map" => is_list_operations(current, index, tokens)?,
             "head"|"tail"|"empty"|"length"|"append"|"each"|"cons"|"append" => is_list_operations(current, index, tokens)?,
             // "parseInteger"|"parseFloat"|"words" => is_string_parsing(current, index, tokens)?,
             _ => is_symbol(current, index, tokens)?,

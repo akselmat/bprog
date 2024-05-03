@@ -21,9 +21,9 @@ pub enum ProgramError {
     UnsupportedType,
     UnmatchedClosingBracket,
     IncompleteString,
-    ExpectedListAndQuotation
+    ExpectedListAndQuotation,
 
-
+    ParserError(ParserError),  // Add this to encapsulate parser errors
 }
 
 // Represents parser errors.
@@ -34,4 +34,10 @@ pub enum ParserError {
     IncompleteQuotation,
     // nyy
     UnexpectedEndOfInput,
+}
+
+impl From<ParserError> for ProgramError {
+    fn from(err: ParserError) -> Self {
+        ProgramError::ParserError(err)
+    }
 }

@@ -441,7 +441,7 @@ mod test_quotations {
 }
 
 mod test_if {
-    use bprog::t;
+    // use bprog::t;
 
 //     #[test]
 //     fn test_if_true() {
@@ -499,7 +499,7 @@ mod test_if {
 // }
 //
 mod test_times {
-    use bprog::t;
+    // use bprog::t;
 //
 //     #[test]
 //     fn test_times_block() {

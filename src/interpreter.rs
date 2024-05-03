@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::f32::consts::E;
 use crate::parser::{Parser, split_into_tokens};
 use crate::t;
-use std::io::{self, Write}; // for input/output operations
+use std::io::{self, Read, Write}; // for input/output operations
 
 
 
@@ -46,8 +46,51 @@ impl Interpreter {
         }
     }
 
-    // Run the REPL loop
-    pub fn run_repl(&mut self) {
+
+    pub fn run_normal_mode(&mut self) {
+        let mut input = String::new();
+        // io::stdin().read_to_string(&mut input).expect("Failed to read input");
+        let input = " [ [ { } { } ] ] ";
+
+        match Parser::new(&input.trim()).parse() {
+            Ok(tokens) => {
+                self.set_tokens(tokens);
+                match self.interpret() {
+                    Ok(stack) => {
+                        if stack.elements.len() > 1 {
+                            println!("Error: {:?}", ProgramError::ProgramFinishedWithMultipleValues);
+                        } else {
+                            println!("{}", stack); // Using the Display trait of Stack
+                        }
+                    },
+                    Err(e) => println!("Error: {:?}", e),
+                }
+            },
+            Err(e) => println!("Error: {:?}", e),
+        }
+
+
+    }
+
+    // pub fn run_normal_mode(&mut self) -> Result<(), ProgramError> {
+    //     let mut input = String::new();
+    //     io::stdin().read_to_string(&mut input).expect("Failed to read input");
+    //     let tokens = Parser::new(&input).parse()?;
+    //     self.set_tokens(tokens);
+    //
+    //     let result = self.interpret()?;
+    //     if result.elements.len() > 1 {
+    //         Err(ProgramError::ProgramFinishedWithMultipleValues)
+    //     } else {
+    //         println!("{}", result);
+    //         Ok(())
+    //     }
+    // }
+
+
+
+    // Run the REPL mode
+    pub fn run_repl_mode(&mut self) {
         let stdin = io::stdin(); // Get the stdin handle once instead of multiple times
         let mut input = String::new();
 
@@ -75,7 +118,7 @@ impl Interpreter {
                         Err(e) => println!("Error: {:?}", e),
                     }
                 },
-                Err(error) => println!("Error reading line: {}", error),
+                Err(e) => println!("Error reading line: {}", e),
             }
         }
     }
@@ -83,9 +126,6 @@ impl Interpreter {
 }
 
 
-
-
-// prøver noen nytt!!
 pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     for token in tokens {
         match token {
@@ -507,30 +547,3 @@ fn append(left: Token, right: Token) -> Result<Token, ProgramError> {
         _ => Err(ProgramError::ExpectedList),
     }
 }
-
-
-
-// Token::Symbol(sym) => {
-//     handle_symbol(&sym, symbols, stack)?;
-// },
-// Token::Symbol(sym) if sym == "exec" => {
-//     // Execute the top block if 'exec' is encountered
-//     execute_block(symbols, stack)?;
-// },
-// Token::Block(inner_tokens) => {
-//     // Optionally create a new stack or use the existing one
-//     // depending on whether you want isolated or shared stack spaces
-//     // interpretor(inner_tokens, symbols, stack)?;
-// },
-
-
-// // Method to execute the interpreter
-// pub fn interpret(&mut self) -> Result<Vec<Token>, ProgramError> {
-//     interpretor(&self.tokens, &mut self.symbols, &mut self.stack);
-//     // After processing all tokens, check if the stack is empty
-//     if self.stack.elements.is_empty() {
-//         Err(ProgramError::StackEmpty)
-//     } else {
-//         Ok(self.stack.elements.clone()) // Return a copy of the stack's elements
-//     }
-// }

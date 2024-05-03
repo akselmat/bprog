@@ -6,21 +6,36 @@ extern crate bprog;
 use bprog::stack::Stack;
 use bprog::{parser::*,interpreter::*};
 use std::fmt;
-
-
-
+use bprog::errors::ProgramError;
 
 fn main() {
     let mut interpreter = Interpreter::new(Vec::new());
     let args: Vec<String> = env::args().collect();
-    let mode = args.get(1).map(String::as_str).unwrap_or("NORMAL");
-
+    let mode = args.get(1).map(String::as_str).unwrap_or("normal");
     match mode {
-        "repl" => interpreter.run_repl(), // Start the REPL using the method
-        // "normal" => normal_mode(),
-        _ => println!("Unknown mode, use 'REPL' or 'NORMAL'"),
+        "repl" => interpreter.run_repl_mode(), // Start the REPL using the method
+        _ =>  {
+            interpreter.run_normal_mode()
+        },
     }
 }
+
+
+
+
+
+
+// fn main() -> Result<(), ProgramError> {
+//     let mut interpreter = Interpreter::new(Vec::new());
+//     let args: Vec<String> = env::args().collect();
+//     let mode = args.get(1).map(String::as_str).unwrap_or("normal");
+//     match mode {
+//         "repl" => Ok(interpreter.run_repl_mode()), // Start the REPL using the method
+//         _ =>  {
+//             Ok(interpreter.run_normal_mode()?)
+//         },
+//     }
+// }
 
 
 
