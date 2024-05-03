@@ -37,7 +37,7 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self) -> Result<Stack, ProgramError> {
-        interpretor(&self.tokens, &mut self.symbols, &mut self.stack);
+        process_tokens_recursively(&self.tokens, &mut self.symbols, &mut self.stack);
         // After processing all tokens, check if the stack is empty
         if self.stack.elements.is_empty() {
             Err(ProgramError::StackEmpty)
@@ -46,13 +46,13 @@ impl Interpreter {
         }
     }
 
-
     pub fn run_normal_mode(&mut self) {
         let mut input = String::new();
-        // io::stdin().read_to_string(&mut input).expect("Failed to read input");
-        let input = " [ [ { } { } ] ] ";
+        io::stdin().read_to_string(&mut input).expect("Failed to read input");
+        // let input = " [ { ] }  ";
+        // let input = " [ False [ ] True [ 1 2 ] ] ";
 
-        match Parser::new(&input.trim()).parse() {
+        match Parser::new(&input.trim()).parse_tokens() {
             Ok(tokens) => {
                 self.set_tokens(tokens);
                 match self.interpret() {
@@ -68,26 +68,7 @@ impl Interpreter {
             },
             Err(e) => println!("Error: {:?}", e),
         }
-
-
     }
-
-    // pub fn run_normal_mode(&mut self) -> Result<(), ProgramError> {
-    //     let mut input = String::new();
-    //     io::stdin().read_to_string(&mut input).expect("Failed to read input");
-    //     let tokens = Parser::new(&input).parse()?;
-    //     self.set_tokens(tokens);
-    //
-    //     let result = self.interpret()?;
-    //     if result.elements.len() > 1 {
-    //         Err(ProgramError::ProgramFinishedWithMultipleValues)
-    //     } else {
-    //         println!("{}", result);
-    //         Ok(())
-    //     }
-    // }
-
-
 
     // Run the REPL mode
     pub fn run_repl_mode(&mut self) {
@@ -102,7 +83,7 @@ impl Interpreter {
             match stdin.read_line(&mut input) {
                 Ok(_) => {
                     if input.trim() == "exit" { break; } // Exit command to quit REPL
-                    match Parser::new(&input.trim()).parse() {
+                    match Parser::new(&input.trim()).parse_tokens() {
                         Ok(tokens) => {
                             self.set_tokens(tokens);
                             match self.interpret() {
@@ -126,24 +107,11 @@ impl Interpreter {
 }
 
 
-pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
+pub fn process_tokens_recursively<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
     for token in tokens {
         match token {
-            Token::Int(value) => {
-                stack.push(Token::Int(*value));
-            },
-            Token::Float(value) => {
-                stack.push(Token::Float(*value));
-            },
-            Token::Bool(value) => {
-                stack.push(Token::Bool(*value));
-            },
-            Token::String(value) => {
-                stack.push(Token::String(value.clone()));
-            },
-            Token::Symbol(sym) => {
-                handle_symbol(&sym, symbols, stack)?;
-            },
+            Token::Int(_) | Token::Float(_) | Token::Bool(_) | Token::String(_) => stack.push(token.clone()),
+            Token::Symbol(sym) => handle_symbol(&sym, symbols, stack)?,
             Token::Block(inner_tokens) => {
                 // Push the whole block onto the stack without executing it
                 if let Some(_) = symbols.get("map") {
@@ -156,7 +124,7 @@ pub fn interpretor<'a>(tokens: &[Token], symbols: &mut HashMap<String, Token>, s
             Token::List(inner_tokens) => {
                 // For a list, you might want to push the entire evaluated list back onto the stack
                 let mut list_stack = Stack::new();
-                interpretor(inner_tokens, symbols, &mut list_stack)?;
+                process_tokens_recursively(inner_tokens, symbols, &mut list_stack)?;
                 stack.push(Token::List(list_stack.elements));
             },
             Token::Arithmetic(op) | Token::LogicalOp(op) | Token::ListOp(op) => {
@@ -180,7 +148,7 @@ fn execute_map(stack: &mut Stack) -> Result<(), ProgramError> {
             // Apply the block to each element in the list
             for element in elements {
                 stack.push(element.clone()); // Push the element onto the stack
-                interpretor(&ops, &mut HashMap::new(), stack)?; // Execute the block
+                process_tokens_recursively(&ops, &mut HashMap::new(), stack)?; // Execute the block
                 if let Ok(result) = stack.pop() {
                     new_list.push(result); // Collect the result
                 }
@@ -204,7 +172,7 @@ fn execute_block(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Res
     if let Token::Block(inner_tokens) = block_token {
         // Recursively interpret the block's tokens
         // println!("interpretor(&inner_tokens, symbols, stack)?!");
-        interpretor(&inner_tokens, symbols, stack)?;
+        process_tokens_recursively(&inner_tokens, symbols, stack)?;
     } else {
         return Err(ProgramError::ExpectedQuotation);
     }

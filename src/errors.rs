@@ -34,6 +34,10 @@ pub enum ParserError {
     IncompleteQuotation,
     // nyy
     UnexpectedEndOfInput,
+
+    // ny
+    MismatchedBracket,
+    UnbalancedBrackets
 }
 
 impl From<ParserError> for ProgramError {

@@ -2,75 +2,69 @@
 
 use std::process::id;
 use std::vec;
+use crate::{BracketContext, BracketType};
+use crate::BracketType::{List, Quotation};
 use crate::token::Token;
 use crate::errors::{ParserError, ProgramError};
 
 
+
+
+
+
 #[derive(Debug, Clone, PartialEq, PartialOrd)] // må kanskje endre dette
 pub struct Parser {
-    result: Vec<Token>,
-    tokens: Vec<String>,
-    index: usize,
-    level: usize,
+    parsed_tokens: Vec<Token>,
+    raw_tokens: Vec<String>,
+    current_index: usize,
+    bracket_context: BracketContext,
 }
 
 impl Parser  {
     pub fn new(input: &str) -> Self {
         Self {
-            result: vec![],
-            tokens: split_into_tokens(input),
-            index: 0,
-            level: 0,
+            parsed_tokens: vec![],
+            raw_tokens: split_into_tokens(input),
+            current_index: 0,
+            bracket_context: BracketContext::new(),
         }
     }
-    pub fn get_result(&self) -> Vec<Token> {
-        self.result.clone()
-    }
 
-    pub fn parse(&mut self) -> Result<Vec<Token>, ParserError> {
-        match nest(&mut self.result, &mut self.level, &mut self.index, &self.tokens) {
-            Ok(()) => Ok(self.get_result()),
-            Err(e) => Err(e),  // Forward the actual error directly
+    pub fn parse_tokens(&mut self) -> Result<Vec<Token>, ParserError> {
+        match parse_tokens_recursively(&mut self.parsed_tokens, &mut self.bracket_context, &mut self.current_index, &self.raw_tokens) {
+            Ok(()) => Ok(self.parsed_tokens.clone()),
+            Err(e) => Err(e),
         }
     }
 }
 
 
-// !!!!!!!!
-// FUNCTIONS
-fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
-    // let mut last_opened = None;
+fn parse_tokens_recursively<'a>(current: &mut Vec<Token>, context: &mut BracketContext, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     while *index < tokens.len() {
         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
         match token {  // Convert String to &str for comparison
-            "]" => {
-                if *level == 0 {
-                    return Err(ParserError::IncompleteList);
-                }
-                *index += 1;
-                *level -= 1;
-                return Ok(());
-            },
             "[" => {
+                context.open_bracket(BracketType::List);
                 *index += 1;
-                *level += 1;
                 let mut new_current = vec![];
-                nest(&mut new_current, level, index, tokens)?;
+                parse_tokens_recursively(&mut new_current, context, index, tokens)?;
                 current.push(Token::List(new_current));
             },
-            "{" => {
+            "]" => {
+                context.close_bracket(BracketType::List);
                 *index += 1;
-                *level += 1;
+                return Ok(());
+            },
+            "{" => {
+                context.open_bracket(BracketType::Quotation);
+                *index += 1;
                 let mut block_tokens = vec![];
-                nest(&mut block_tokens, level, index, tokens)?;
+                parse_tokens_recursively(&mut block_tokens, context, index, tokens)?;
                 current.push(Token::Block(block_tokens));
             },
             "}" => {
-                if *level == 0 {
-                    return Err(ParserError::IncompleteQuotation);
-                }
+                context.close_bracket(BracketType::Quotation);
                 *index += 1;
-                *level -= 1;
                 return Ok(());
             },
             _ if token.parse::<i128>().is_ok() => create_int(current, index, tokens)?,
@@ -84,12 +78,9 @@ fn nest<'a>(current: &mut Vec<Token>, level: &mut usize, index: &mut usize, toke
             _ => is_symbol(current, index, tokens)?,
         }
     }
-    if *level != 0 {
-        Err(ParserError::IncompleteQuotation)
-    } else {
-        Ok(())
-    }
+    context.is_balanced()
 }
+
 
 fn is_symbol(current: &mut Vec<Token>, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
