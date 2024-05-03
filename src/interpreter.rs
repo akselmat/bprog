@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::f32::consts::E;
 use crate::parser::{Parser, split_into_tokens};
 use crate::t;
-use std::io::{self, Read, Write}; // for input/output operations
+use std::io::{self, Read, Write};
 
 
 
@@ -48,15 +48,18 @@ impl Interpreter {
 
     pub fn run_normal_mode(&mut self) {
         let mut input = String::new();
-        io::stdin().read_to_string(&mut input).expect("Failed to read input");
-        // let input = " [ { ] }  ";
+        // io::stdin().read_to_string(&mut input).expect("Failed to read input");
+        // let input = " [ { + } { 10 + } { 20 10 + } ]  ";
+        let input = " \" 12 \" parseInteger   ";
         // let input = " [ False [ ] True [ 1 2 ] ] ";
 
         match Parser::new(&input.trim()).parse_tokens() {
             Ok(tokens) => {
+                println!("{:?}", tokens.clone()); // Using the Display trait of Stack
                 self.set_tokens(tokens);
                 match self.interpret() {
                     Ok(stack) => {
+                        println!("{:?}", stack); // Using the Display trait of Stack
                         if stack.elements.len() > 1 {
                             println!("Error: {:?}", ProgramError::ProgramFinishedWithMultipleValues);
                         } else {
@@ -184,7 +187,7 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
     match op {
         // |"cons"|"append"|"each"|"map"
         "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append"|"map" => binary_op(op, stack),
-        "not"|"head"|"tail"|"empty"|"length" => unary_op(op, stack),
+        "not"|"head"|"tail"|"empty"|"length"|"parseInteger"|"parseFloat" => unary_op(op, stack),
         "swap"|"dup"|"pop" => stack_op(op, stack),
         // ":=" => handle_assignment(symbols, stack, symbol),
         _ => Err(ProgramError::UnknownOperation),
@@ -225,7 +228,7 @@ fn define_func(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Resul
             // println!("symbols.insert: {:?}", right.clone());
             symbols.insert(a, right);  // Assign any function token to the symbol
         },
-        _ => return Err(ProgramError::ExpectedVariable("Expected a symbol for variable assignment.".to_string())),
+        _ => return Err(ProgramError::ExpectedVariable),
     }
     Ok(())
 }
@@ -260,7 +263,7 @@ fn handle_assignment(symbols: &mut HashMap<String, Token>, stack: &mut Stack) ->
         (Token::Symbol(a), _) => {
             symbols.insert(a, right);  // Assign any non-symbol token to the symbol
         },
-        _ => return Err(ProgramError::ExpectedVariable("Expected a symbol for variable assignment.".to_string())),
+        _ => return Err(ProgramError::ExpectedVariable),
     }
     Ok(())
 }
@@ -290,12 +293,40 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
         "tail" => tail(right)?,
         "empty" => emptyy(right)?,
         "length" => length(right)?,
+        "parseInteger" => parse_integer(right)?,  // Add this case
+        "parseFloat" => parse_float(right)?,  // Add this case
         _ => Err(ProgramError::UnsupportedType)?
     };
 
     stack.push(result);
     Ok(())
 }
+fn parse_integer(token: Token) -> Result<Token, ProgramError> {
+    match token {
+        (Token::String(a)) => {
+            if let Ok(value) = a.parse::<i128>(){
+                return Ok(Token::Int(value))
+            } else {
+              return Err(ProgramError::NumberConversionError)
+            }
+        }
+        _=> Err(ProgramError::ExpectedVariable)
+    }
+}
+fn parse_float(token: Token) -> Result<Token, ProgramError> {
+    match token {
+        (Token::String(a)) => {
+            if let Ok(value) = a.parse::<f64>(){
+                return Ok(Token::Float(value))
+            } else {
+                return Err(ProgramError::NumberConversionError)
+            }
+        }
+        _=> Err(ProgramError::ExpectedVariable)
+    }
+}
+
+
 
 // binary_operation
 fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {

@@ -42,6 +42,7 @@ impl Parser  {
 fn parse_tokens_recursively<'a>(current: &mut Vec<Token>, context: &mut BracketContext, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     while *index < tokens.len() {
         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
+        // let input = " [ { } ]  ";
         match token {  // Convert String to &str for comparison
             "[" => {
                 context.open_bracket(BracketType::List);
@@ -51,7 +52,7 @@ fn parse_tokens_recursively<'a>(current: &mut Vec<Token>, context: &mut BracketC
                 current.push(Token::List(new_current));
             },
             "]" => {
-                context.close_bracket(BracketType::List);
+                context.close_bracket(BracketType::List)?;
                 *index += 1;
                 return Ok(());
             },
@@ -63,14 +64,14 @@ fn parse_tokens_recursively<'a>(current: &mut Vec<Token>, context: &mut BracketC
                 current.push(Token::Block(block_tokens));
             },
             "}" => {
-                context.close_bracket(BracketType::Quotation);
+                context.close_bracket(BracketType::Quotation)?;
                 *index += 1;
                 return Ok(());
             },
             _ if token.parse::<i128>().is_ok() => create_int(current, index, tokens)?,
             _ if token.parse::<f64>().is_ok() => create_float(current, index, tokens)?,
             "\"" => create_string(current, index, tokens)?,
-            "div"|"+"| "-" | "*" | "/"| "swap"|"pop"|"dup" => is_arithmetic(current, index, tokens)?,
+            "div"|"+"| "-" | "*" | "/"| "swap"|"pop"|"dup"|"parseInteger"|"parseFloat" => is_arithmetic(current, index, tokens)?,
             "True"|"False" => is_bool(current, index, tokens)?,
             "not"|"&&"|"||"|">"|"<"|"==" => is_logical(current, index, tokens)?,
             "head"|"tail"|"empty"|"length"|"append"|"each"|"cons"|"append" => is_list_operations(current, index, tokens)?,

@@ -10,7 +10,7 @@ pub enum ProgramError {
     ExpectedEnumerable,
     ExpectedQuotation,
     ExpectedList,
-    ExpectedVariable(String),
+    ExpectedVariable,
     DivisionByZero,
     ProgramFinishedWithMultipleValues,
     NumberConversionError,
@@ -32,11 +32,9 @@ pub enum ParserError {
     IncompleteString,
     IncompleteList,
     IncompleteQuotation,
+
     // nyy
     UnexpectedEndOfInput,
-
-    // ny
-    MismatchedBracket,
     UnbalancedBrackets
 }
 
