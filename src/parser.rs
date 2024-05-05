@@ -1,18 +1,9 @@
 #![allow(unused)]
-
-use std::process::id;
-use std::vec;
 use crate::{BracketContext, BracketType};
-use crate::BracketType::{List, Quotation};
 use crate::token::Token;
-use crate::errors::{ParserError, ProgramError};
+use crate::errors::{ParserError};
 
-
-
-
-
-
-#[derive(Debug, Clone, PartialEq, PartialOrd)] // må kanskje endre dette
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Parser {
     parsed_tokens: Vec<Token>,
     raw_tokens: Vec<String>,
@@ -42,8 +33,7 @@ impl Parser  {
 fn parse_tokens_recursively<'a>(current: &mut Vec<Token>, context: &mut BracketContext, index: &mut usize, tokens: &[String]) -> Result<(), ParserError> {
     while *index < tokens.len() {
         let token = tokens.get(*index).ok_or(ParserError::UnexpectedEndOfInput)?.as_str();
-        // let input = " [ { } ]  ";
-        match token {  // Convert String to &str for comparison
+        match token {
             "[" => {
                 context.open_bracket(BracketType::List);
                 *index += 1;

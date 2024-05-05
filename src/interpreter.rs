@@ -1,15 +1,9 @@
 #![allow(unused)]
-
-use std::fmt;
-
 use crate::stack::Stack;
 use crate::token::{Token};
-use crate::errors::{ParserError, ProgramError};
-use crate::token::Token::{Arithmetic, Block};
+use crate::errors::{ProgramError};
 use std::collections::HashMap;
-use std::f32::consts::E;
-use crate::parser::{Parser, split_into_tokens};
-use crate::t;
+use crate::parser::{Parser};
 use std::io::{self, Read, Write};
 
 
@@ -48,22 +42,19 @@ impl Interpreter {
 
     pub fn run_normal_mode(&mut self) {
         let mut input = String::new();
-        // io::stdin().read_to_string(&mut input).expect("Failed to read input");
+        io::stdin().read_to_string(&mut input).expect("Failed to read input");
         // let input = " [ { + } { 10 + } { 20 10 + } ]  ";
-        let input = " \" 12 \" parseInteger   ";
-        // let input = " [ False [ ] True [ 1 2 ] ] ";
-
+        // let input = " \" 12 \" parseInteger   ";
         match Parser::new(&input.trim()).parse_tokens() {
             Ok(tokens) => {
-                println!("{:?}", tokens.clone()); // Using the Display trait of Stack
                 self.set_tokens(tokens);
                 match self.interpret() {
                     Ok(stack) => {
-                        println!("{:?}", stack); // Using the Display trait of Stack
+                        // println!("{:?}", stack);
                         if stack.elements.len() > 1 {
                             println!("Error: {:?}", ProgramError::ProgramFinishedWithMultipleValues);
                         } else {
-                            println!("{}", stack); // Using the Display trait of Stack
+                            println!("{}", stack);
                         }
                     },
                     Err(e) => println!("Error: {:?}", e),
@@ -75,12 +66,12 @@ impl Interpreter {
 
     // Run the REPL mode
     pub fn run_repl_mode(&mut self) {
-        let stdin = io::stdin(); // Get the stdin handle once instead of multiple times
+        let stdin = io::stdin();
         let mut input = String::new();
 
         loop {
             print!("bprog> ");
-            io::stdout().flush().unwrap(); // Ensure the prompt is written out immediately
+            io::stdout().flush().unwrap();
 
             input.clear(); // Clear the previous input
             match stdin.read_line(&mut input) {
@@ -145,7 +136,6 @@ fn execute_map(stack: &mut Stack) -> Result<(), ProgramError> {
     let list_token = stack.pop()?;
 
     match (list_token, quotation) {
-        // (Token::List(elements), Token::Block(ops) | Token::Symbol(op)) => {
         (Token::List(elements), Token::Block(ops)) => {
             let mut new_list = vec![];
             // Apply the block to each element in the list
@@ -165,11 +155,8 @@ fn execute_map(stack: &mut Stack) -> Result<(), ProgramError> {
 
 
 
-
 // Function to execute a block
 fn execute_block(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    // println!("FN execute_block ------------------------");  //--
-    // println!("current: stack: {:?}", stack.elements.clone()); // current stack
     let block_token = stack.pop()?;
     // println!("block_token {:?}", block_token);
     if let Token::Block(inner_tokens) = block_token {
@@ -185,7 +172,6 @@ fn execute_block(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Res
 
 pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
     match op {
-        // |"cons"|"append"|"each"|"map"
         "+"|"-"|"*"|"/"|"div"|"&&"|"||"|">"|"<"|"=="|"cons"|"append"|"map" => binary_op(op, stack),
         "not"|"head"|"tail"|"empty"|"length"|"parseInteger"|"parseFloat" => unary_op(op, stack),
         "swap"|"dup"|"pop" => stack_op(op, stack),
@@ -195,13 +181,11 @@ pub fn execute_operation(op: &str, stack: &mut Stack) -> Result<(), ProgramError
 }
 
 fn handle_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    // println!("FN handle_symbol-------------------------");
     match symbol {
         "exec" => execute_block(symbols, stack)?,
         "fun" => define_func(symbols, stack)?,
         "map" => {
             symbols.insert("map".to_string(), Token::Symbol("".to_string()));
-        // println!("insert into the map: ");
         },
         ":=" => handle_assignment(symbols, stack)?,
         _ => {
@@ -213,19 +197,14 @@ fn handle_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut
 
 
 fn define_func(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    // println!("FN define_func!!!!!!!!!!!!");
     if stack.elements.len() < 2 {
         return Err(ProgramError::NotEnoughElements);
     }
-    // println!("define func: stack elements:{:?}", stack.elements.clone());
     let right = stack.pop()?;
     let left = stack.pop()?;
-    // println!("define_func left: {:?}", left.clone());
-    // println!("define_func right: {:?}", right.clone());
 
     match (left, &right) {
         (Token::Symbol(a), Token::Block(b)) => {
-            // println!("symbols.insert: {:?}", right.clone());
             symbols.insert(a, right);  // Assign any function token to the symbol
         },
         _ => return Err(ProgramError::ExpectedVariable),
@@ -233,8 +212,6 @@ fn define_func(symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Resul
     Ok(())
 }
 fn execute_symbol(symbol: &str, symbols: &mut HashMap<String, Token>, stack: &mut Stack) -> Result<(), ProgramError> {
-    // println!("FN execute_symbol!!!!!!!!!!!!!!!!!");
-    // println!("stack elements: {:?}:", stack.elements.clone());
     if let Some(token_value) = symbols.get(symbol) { // if key exist then get the value of that symbol
         if let Token::Block(inner_tokens) = token_value { // if a function
             // println!("is a block value!! {:?}:", inner_tokens.clone());
@@ -303,7 +280,7 @@ fn unary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
 }
 fn parse_integer(token: Token) -> Result<Token, ProgramError> {
     match token {
-        (Token::String(a)) => {
+        Token::String(a) => {
             if let Ok(value) = a.parse::<i128>(){
                 return Ok(Token::Int(value))
             } else {
@@ -315,7 +292,7 @@ fn parse_integer(token: Token) -> Result<Token, ProgramError> {
 }
 fn parse_float(token: Token) -> Result<Token, ProgramError> {
     match token {
-        (Token::String(a)) => {
+        Token::String(a) => {
             if let Ok(value) = a.parse::<f64>(){
                 return Ok(Token::Float(value))
             } else {
@@ -330,15 +307,11 @@ fn parse_float(token: Token) -> Result<Token, ProgramError> {
 
 // binary_operation
 fn binary_op(op: &str, stack: &mut Stack) -> Result<(), ProgramError> {
-    // println!("FN binary_op--------------:");
-    // println!("stack elements: {:?}", stack.elements.clone());
     if stack.elements.len() < 2 {
         return Err(ProgramError::NotEnoughElements);
     }
     let right = stack.pop()?;
-    // println!("rigth: {:?}",right.clone());
     let left = stack.pop()?;
-    // println!("left: {:?}", left.clone());
 
     let result = match op {
         "+" => add(left, right)?,

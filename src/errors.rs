@@ -14,6 +14,7 @@ pub enum ProgramError {
     DivisionByZero,
     ProgramFinishedWithMultipleValues,
     NumberConversionError,
+
     // Ny
     UnknownOperation,
     NotEnoughElements,
@@ -22,8 +23,7 @@ pub enum ProgramError {
     UnmatchedClosingBracket,
     IncompleteString,
     ExpectedListAndQuotation,
-
-    ParserError(ParserError),  // Add this to encapsulate parser errors
+    ParserError(ParserError),
 }
 
 // Represents parser errors.
@@ -33,7 +33,6 @@ pub enum ParserError {
     IncompleteList,
     IncompleteQuotation,
 
-    // nyy
     UnexpectedEndOfInput,
     UnbalancedBrackets
 }
